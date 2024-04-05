@@ -1,0 +1,304 @@
+<pre>
+  BIP: ?
+  Layer: Consensus (soft fork)
+  Title: Segwit Version 2 Script Interpretation
+  Author: Rusty Russell <rusty@rustcorp.com.au>
+  Comments-URI: TBA
+  Status: Draft
+  Type: Standards Track
+  Created: 2024-01-04
+  License: BSD-3-Clause
+</pre>
+
+==Abstract==
+
+Bitcoin v0.3.1 removed and reduced Bitcoin Script significantly, to avoid multiple denial-of-service issues.  This specification seeks to restore much of that functionality in a new segwit version (v2, i.e. `bc1z...`), using a weight-based budget for opcodes which deal with variable-length stack values.  This allows the prior limit of 520 bytes per stack entry to be relaxed again.
+
+==Copyright==
+
+This document is licensed under the 3-clause BSD license.
+
+==Specification==
+
+These rules apply when executing a script for a native SegWit output with version number 2 (a "version 2 tapscript").
+
+A "varops budget" is determined by multiplying the total transaction weight by the fixed factor 1666 (FIXME).
+
+Opcodes consume budget as they are executed, based on the size (not the value) of their parameters as detailed below.  Opcodes not specified here consume no budget.  A transaction which exceeds its budget fails to validate.
+
+Arithmetic opcodes are extended to allow variable-length operands beyond 4 bytes, though they are now unsigned.  Bit operations and re-enabled, as are multiplication and division.
+
+The individual stack entry limit of 520 bytes is replaced with a gross limit of 520,000 bytes total.  The limit of 1000 total stack entries remains.
+
+===A Model For Opcodes Dealing With Stack Data===
+
+When large stack objects are permitted, much of the bottleneck for script operations is based on the cache footprint of the stack data it accesses; the exceptions being hashing and signature operations.
+
+All current opcodes can be reasonably implemented using linear accesses to stack data (though sometimes multiple times), and this inspires a simple "worst case per byte of stack access" cost model using the size of the stack inputs (or occasionally, outputs).
+
+We assume that both non-hash computation and the manipulation of the stack vector itself (e.g. OP_DROP) are negligible.
+
+Hashing operations also have a multiplier beyond their raw byte input, based on approximate additional CPU cost per byte.  Signature operations already have their own sigops budget.
+
+The aim is to limit worst-case script evaluation timing, without meaningfully impacting any useful script operations.  Note that an opcode implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a signficantly worse worst-case behaviour would be exploitable.
+
+===SUCCESS Opcodes===
+
+The following opcodes are renamed OP_SUCCESSx, and cause validatation to immediately succeed:
+
+* OP_1NEGATE = OP_SUCCESS79
+* OP_NEGATE = OP_SUCCESS143
+* OP_ABS = OP_SUCCESS144
+
+====Rationale====
+
+Negative numbers are not natively supported in v2 Tapscript.  Arbitrary precision makes them difficult to manipulate and are not used meaningfully in in bitcoin transactions.
+
+===Enabled Opcodes===
+
+Twelve opcodes which were removed in v0.3.1 are re-enabled in v2 Tapscript.
+
+{|
+|Lorem ipsum dolor sit amet,
+consetetur sadipscing elitr,
+sed diam nonumy eirmod tempor invidunt
+ut labore et dolore magna aliquyam erat,
+sed diam voluptua.
+
+At vero eos et accusam et justo duo dolores
+et ea rebum. Stet clita kasd gubergren,
+no sea takimata sanctus est Lorem ipsum
+dolor sit amet.
+|
+* Lorem ipsum dolor sit amet
+* consetetur sadipscing elitr
+* sed diam nonumy eirmod tempor invidunt
+|}
+
+{|
+! Opcode
+! Value
+! Required Stack Elements
+! Definition
+|-
+|OP_CAT
+|126
+|2
+|
+Pop B off the stack.
+Pop A off the stack.
+Append B to A.
+Push A onto the stack.
+|-
+|OP_SUBSTR
+|127
+|3
+|
+* Pop LEN off the stack.
+* Pop BEGIN off the stack.
+* Pop A off the stack.
+* Remove BEGIN bytes from the front of A (all bytes if BEGIN greater than length of A).
+* If A is longer than LEN, truncate A to length LEN.
+* Push A onto the stack.
+|}
+
+; OP_CAT (0x7e)
+; OP_SUBSTR (0x7f)
+: * If there are less than three elements on the stack, fail.
+  * Pop LEN off the stack.
+  * Pop BEGIN off the stack.
+  * Pop A off the stack.
+  * Remove BEGIN bytes from the front of A, or all bytes if BEGIN is greater than the length of A.
+  * If A is longer than LEN, truncate A to length LEN.
+  * Push A onto the stack.
+; OP_LEFT (0x80)
+: * If there are less than two elements on the stack, fail.
+  * Pop OFFSET off the stack.
+  * Pop A off the stack.
+  * If A is longer than OFFSET, truncate A to length OFFSET
+  * Push A onto the stack.
+; OP_RIGHT (0x81)
+: * If there are less than two elements on the stack, fail.
+  * Pop OFFSET off the stack.
+  * Pop A off the stack.
+  * Remove OFFSET bytes from the front of A, or all bytes if OFFSET is greater than the length of A.
+  * Push A onto the stack.
+; OP_INVERT (0x83)
+: * If there is less than one element on the stack, fail.
+  * Pop A off the stack.
+  * For each byte in A, XOR it with 0xFF (i.e. invert the bits)
+  * Push A onto the stack.
+; OP_AND (0x84)
+: * If there are less than two elements on the stack, fail.
+  * 
+
+    OP_OR = 0x85,
+    OP_XOR = 0x86,
+    OP_MUL = 0x95,
+    OP_DIV = 0x96,
+    OP_MOD = 0x97,
+    OP_LSHIFT = 0x98,
+    OP_RSHIFT = 0x99,
+
+
+* OP_1NEGATE = OP_SUCCESS79
+* OP_NEGATE = OP_SUCCESS143
+* OP_ABS = OP_SUCCESS144
+
+===Push Opcodes===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_PUSHDATA1
+|Length of data pushed on stack
+|-
+|OP_PUSHDATA2
+|Length of data pushed on stack
+|-
+|OP_PUSHDATA4
+|Length of data pushed on stack
+|}
+
+===Control Opcodes===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_IF
+|Operand length
+|-
+|OP_NOTIF
+|Operand length
+|-
+|OP_VERIFY
+|Operand length
+|}
+
+====Rationale====
+
+In the worst case, these operations have to examine every byte to determine if the value is 0.
+
+===Stack Manipulation===
+
+{|
+! Opcode
+! Varops Budget Cost
+! Equivalent Measure
+|-
+|OP_2DUP
+|(Sum of two operand lengths) x 2
+|(Sum of lengths of new stack entries) x 2
+|-
+|OP_3DUP
+|(Sum of three operand lengths) x 2
+|(Sum of lengths of new stack entries) x 2
+|-
+|OP_2OVER
+|(Sum of lengths of third and fourth-top stack entries (before)) x 2
+|(Sum of lengths of new stack entries) x 2
+|-
+|OP_IFDUP
+|Length of top stack entry (before) (x 3 if duplicated)
+|Length of top stack entry (before) (+ 2 x length of new stack entry if duplicated)
+|-
+|OP_DUP
+|(Length of top stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|-
+|OP_OVER
+|(Length of second-time stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|-
+|OP_PICK
+|(Length of N-th-from-top stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|-
+|OP_TUCK
+|(Length of second-from-top stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|}
+
+====Rationale====
+
+These operators read bytes from one stack entry, write to another.  OP_IFDUP has the same cost as OP_IF, with an optional OP_DUP (and the only case where the varops cost of an operator is dependent on the value, not just size, of the operand).
+
+
+===Splicing===
+
+
+
+    // splice ops
+    OP_CAT = 0x7e,
+    OP_SUBSTR = 0x7f,
+    OP_LEFT = 0x80,
+    OP_RIGHT = 0x81,
+
+    // bit logic
+    OP_INVERT = 0x83,
+    OP_AND = 0x84,
+    OP_OR = 0x85,
+    OP_XOR = 0x86,
+    OP_EQUAL = 0x87,
+    OP_EQUALVERIFY = 0x88,
+
+    // numeric
+    OP_1ADD = 0x8b,
+    OP_1SUB = 0x8c,
+    OP_2MUL = 0x8d,
+    OP_2DIV = 0x8e,
+    OP_NOT = 0x91,
+    OP_0NOTEQUAL = 0x92,
+
+    OP_ADD = 0x93,
+    OP_SUB = 0x94,
+    OP_MUL = 0x95,
+    OP_DIV = 0x96,
+    OP_MOD = 0x97,
+    OP_LSHIFT = 0x98,
+    OP_RSHIFT = 0x99,
+
+    OP_BOOLAND = 0x9a,
+    OP_BOOLOR = 0x9b,
+    OP_NUMEQUAL = 0x9c,
+    OP_NUMEQUALVERIFY = 0x9d,
+    OP_NUMNOTEQUAL = 0x9e,
+    OP_LESSTHAN = 0x9f,
+    OP_GREATERTHAN = 0xa0,
+    OP_LESSTHANOREQUAL = 0xa1,
+    OP_GREATERTHANOREQUAL = 0xa2,
+    OP_MIN = 0xa3,
+    OP_MAX = 0xa4,
+
+    OP_WITHIN = 0xa5,
+
+    // crypto
+    OP_RIPEMD160 = 0xa6,
+    OP_SHA1 = 0xa7,
+    OP_SHA256 = 0xa8,
+    OP_HASH160 = 0xa9,
+    OP_HASH256 = 0xaa,
+
+
+
+
+
+
+
+
+A Taproot output is a native SegWit output (see [[bip-0141.mediawiki|BIP141]]) with version number 1, and a 32-byte witness program.
+The following rules only apply when such an output is being spent.
+
+When evaluating a script
+ 
+-- The technical specification should describe the syntax and semantics of any new feature. The specification should be detailed enough to allow competing, interoperable implementations for any of the current Bitcoin platforms.
+
+* Motivation -- The motivation is critical for BIPs that want to change the Bitcoin protocol. It should clearly explain why the existing protocol is inadequate to address the problem that the BIP solves.
+
+* Rationale -- The rationale fleshes out the specification by describing what motivated the design and why particular design decisions were made. It should describe alternate designs that were considered and related work. The rationale should provide evidence of consensus within the community and discuss important objections or concerns raised during discussion.
+
+* Backwards compatibility -- All BIPs that introduce backwards incompatibilities must include a section describing these incompatibilities and their severity. The BIP must explain how the author proposes to deal with these incompatibilities.
+
+* Reference implementation -- The reference implementation must be completed before any BIP is given status "Final", but it need not be completed before the BIP is accepted. It is better to finish the specification and rationale first and reach consensus on it before writing code. The final implementation must include test code and documentation appropriate for the Bitcoin protocol.
