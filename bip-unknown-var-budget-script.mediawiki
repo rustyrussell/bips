@@ -1,0 +1,630 @@
+<pre>
+  BIP: ?
+  Layer: Consensus (soft fork)
+  Title: Segwit Version 2 Script Interpretation
+  Author: Rusty Russell <rusty@rustcorp.com.au>
+  Comments-URI: TBA
+  Status: Draft
+  Type: Standards Track
+  Created: 2024-01-04
+  License: BSD-3-Clause
+</pre>
+
+==Abstract==
+
+Bitcoin v0.3.1 removed and reduced Bitcoin Script significantly, to avoid multiple denial-of-service issues.  This specification seeks to restore much of that functionality in a new tapscript version (v2), using a weight-based budget for opcodes which deal with variable-length stack values.  This allows the prior limit of 520 bytes per stack entry to be relaxed, and numerical values to be arbitrary length.
+
+==Copyright==
+
+This document is licensed under the 3-clause BSD license.
+
+==Specification==
+
+These rules apply when executing a script for a 33-byte SegWit output with version number 1 (a "version 2 tapscript").
+
+A per-transaction "varops budget" is determined by multiplying the total transaction weight by the fixed factor 8250.
+
+Opcodes consume budget as they are executed, based on the length (not generally the value) of their parameters as detailed below.  Opcodes not specified here consume no budget.  A transaction which exceeds its budget fails to validate.
+
+Arithmetic opcodes are extended to allow variable-length operands beyond 4 bytes, though they are now unsigned.  Other opcodes which interpret numbers or place them on the stack now use unsigned values.  This includes the final stack element after execution (i.e. no "negative zero").  Bit operations are re-enabled, as are multiplication and division.
+
+The individual stack entry limit of 520 bytes is replaced by a larger individual limit and a total limit.
+
+===A Model For Opcodes Dealing With Stack Data===
+
+When large stack objects are permitted, much of the bottleneck for script operations is based on the cache footprint of the stack data it accesses; the exceptions being hashing and signature operations.
+
+All current opcodes can be reasonably implemented using linear accesses to stack data (though sometimes multiple times), and this inspires a simple "worst case per byte of stack access" cost model using the length of the stack inputs (or occasionally, outputs).
+
+We assume that both non-hash computation and the manipulation of the stack vector itself (e.g. OP_DROP) are negligible.
+
+Hashing operations also have a multiplier beyond their raw byte input, based on approximate additional CPU cost per byte.  The budget for signature operations is subsumed into the varops budget, by simply consuming 8250 * 50 varops per CHECKSIG operation.
+
+The aim is to limit worst-case script evaluation timing, without meaningfully impacting any useful script operations.  Note that an opcode implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a signficantly worse worst-case behaviour would be exploitable.
+
+===Limits===
+
+The individual stack entry limit of 520 bytes is increased to the total block weight (4000000) bytes.  An additional gross limit of twice that applies across all stack entries.  The limit of 1000 total stack entries remains.
+
+The budget per transaction weight is derived as follows on a variety of plaforms:
+1. The time taken to verify a Schnorr signature
+2. The time taken for a simple operation on a maximal (4000000 byte) stack entry (i.e. a budget cost of 4000000) 
+
+From this, we can establish the value of a single varop budget, and determine how much budget would be equivalent to the already-established worst-case signature validation (80,000 CHECKSIG operations).  This would be the total budget for a maximal (4,000,000 weight) block.
+
+===SUCCESS Opcodes===
+
+The following opcodes are renamed OP_SUCCESSx, and cause validatation to immediately succeed:
+
+* OP_1NEGATE = OP_SUCCESS79
+* OP_NEGATE = OP_SUCCESS143
+* OP_ABS = OP_SUCCESS144
+
+====Rationale====
+
+Negative numbers are not natively supported in v2 Tapscript.  Arbitrary precision makes them difficult to manipulate and negative values are not used meaningfully in bitcoin transactions.
+
+===Enabled Opcodes===
+
+Twelve opcodes which were removed in v0.3.1 are re-enabled in v2 Tapscript.
+
+If there are less than the required number of stack elements, these opcodes fail.  Equivalently, a requirement to pop off the stack which cannot be satisfied causes the opcode to fail.
+
+Splice opcodes:
+
+{|
+! Opcode
+! Value
+! Required Stack Elements
+! Definition
+|-
+|OP_CAT
+|126
+|2
+|
+# Pop B off the stack.
+# Pop A off the stack.
+# Append B to A.
+# Push A onto the stack.
+|-
+|OP_SUBSTR
+|127
+|3
+|
+# Pop LEN off the stack.
+# Pop BEGIN off the stack.
+# Pop A off the stack.
+# Remove BEGIN bytes from the front of A (all bytes if BEGIN greater than length of A).
+# If A is longer than LEN, truncate A to length LEN.
+# Push A onto the stack.
+|-
+|OP_LEFT
+|128
+|2
+|
+# Pop OFFSET off the stack.
+# Pop A off the stack.
+# If A is longer than OFFSET, truncate A to length OFFSET.
+# Push A onto the stack.
+|-
+|OP_RIGHT
+|129
+|2
+|
+# Pop OFFSET off the stack.
+# Pop A off the stack.
+# Remove OFFSET bytes from the front of A, or all bytes if OFFSET is greater than the length of A.
+# Push A onto the stack.
+|}
+
+Bit operation opcodes:
+
+{|
+! Opcode
+! Value
+! Required Stack Elements
+! Definition
+|-
+|OP_INVERT
+|131
+|1
+|
+# Pop A off the stack.
+# For each byte in A, replace it with that byte bitwise XOR 0xFF (i.e. invert the bits)
+# Push A onto the stack.
+|-
+|OP_AND
+|132
+|2
+|
+# Pop B off the stack.
+# Pop A off the stack.
+# If B is longer than A, swap B and A.
+# For each byte in A (the longer operand): bitwise AND it with the equivalent byte in B (or 0 if past end of B)
+# Push A onto the stack.
+|-
+|OP_OR
+|133
+|2
+|
+# Pop B off the stack.
+# Pop A off the stack.
+# If B is longer than A, swap B and A.
+# For each byte in B (the shorter operand): bitwise OR it with the equivalent byte in A.
+# Push A onto the stack.
+|-
+|OP_XOR
+|134
+|2
+|
+# Pop B off the stack.
+# Pop A off the stack.
+# If B is longer than A, swap B and A.
+# For each byte in B (the shorter operand): exclusive OR it with the equivalent byte in A.
+# Push A onto the stack.
+|}
+
+Bitshift opcodes:
+
+Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts in Bitcoin v0.3.0, and as such they also do not truncated trailing zeroes from results: they are renamed OP_UPSHIFT (nee OP_LSHIFT) and OP_DOWNSHIFT (nee OP_RSHIFT).
+
+Note also that OP_UPSHIFT can produce huge results, and so must be checked for limits prior to evaluation.  It is also carefully defined to avoid reallocating twice (reallocating to prepend bytes, then again to append a single byte) which has the practical advantage of being about to share the same downward bitshift routine as OP_DOWNSHIFT.
+
+{|
+! Opcode
+! Value
+! Required Stack Elements
+! Definition
+|-
+|OP_UPSHIFT
+|152
+|2
+|
+# Pop BITS off the stack.
+# Pop A off the stack.
+# If A shifted by BITS would exceed the individual stack limit, fail.
+# If BITS % 8 == 0: simply prepend BITS / 8 zeroes to A.
+# Otherwise: prepend (BITS / 8) + 1 zeroes to A, then shift A *down* (8 - (BITS % 8)) bits.
+# Push A onto the stack.
+|-
+|OP_DOWNSHIFT
+|153
+|2
+|
+# Pop BITS off the stack.
+# Pop A off the stack.
+# For OFF from BITS / 8 to length(A)-1:
+    # Copy each byte from OFF, shifting by (BITS mod 8), to BITS / 8 bytes earlier in A.
+# Truncate A to remove OFF bytes (or all, if OFF > length of A).
+# Push A onto the stack.
+|}
+
+Multiply and divide opcodes:
+
+These cases can be computationally intensive, which is why the varops budget must be checked before operations.  OP_2MUL and OP_2DIV are far simpler, equivalent to OP_UPSHIFT and OP_DOWNSHIFT except truncating the most-significant zero bytes.
+
+{|
+! Opcode
+! Value
+! Required Stack Elements
+! Definition
+|-
+|OP_2MUL
+|141
+|1
+|
+# Pop A off the stack.
+# Shift each bytes 1 bits to the left (increasing values, equivalent to C's << operator), tracking the last non-zero value.
+# If the final byte overflows, append a single 1 byte.
+# Otherwise, truncate A at the last non-zero byte.
+# Push A onto the stack.
+|-
+|OP_2DIV
+|142
+|1
+|
+# Pop A off the stack.
+# Shift each bytes 1 bits to the right (decreasing values, equivalent to C's >> operator), tracking the last non-zero value.
+# Truncate A at the last non-zero byte.
+# Push A onto the stack.
+|--
+|OP_MUL
+|149
+|2
+|
+# Pop B off the stack.
+# Pop A off the stack.
+# Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
+# Allocate an all-zero vector R of length equal to the sum of the lengths of A and B.
+# For each word in A, multiply it by B and add it into the vector R, offset by the word offset in A.
+# Push R onto the stack.
+|-
+|OP_DIV
+|150
+|2
+|
+# FIXME!
+|-
+|OP_MOD
+|151
+|2
+|
+# FIXME!
+|}
+
+
+===Hashing Opcodes===
+
+The SHA2-256 operation is already a key component of Bitcoin so an optimal implementation is assumed, and cost-per-byte-hashed defined below.
+
+OP_RIPEMD160 and OP_SHA1 are now defined to FAIL if their operands exceed 520 bytes.
+
+===Non-Arithmetic Opcodes Dealing With Stack Numbers===
+
+The following opcodes are redefined in v2 Tapscript to read numbers from the stack as arbitrary-length little-endian values (instead of CScriptNum):
+
+1. OP_CHECKLOCKTIMEVERIFY
+2. OP_CHECKSEQUENCEVERIFY
+3. OP_VERIFY
+4. OP_ROLL
+5. OP_IFDUP
+6. OP_CHECKSIGADD
+
+These opcodes are redefined in v2 Tapscript to write numbers to the stack as minimal-length little-endian values (instead of CScriptNum):
+
+1. OP_CHECKSIGADD
+2. OP_DEPTH
+3. OP_SIZE
+
+===Extended Opcodes===
+
+The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to operate on variable-length unsigned integers.  These always produce minimal values (no trailing zero bytes).
+
+{|
+! Opcode
+! Value
+! Required Stack Elements
+! Definition
+|-
+|OP_ADD
+|147
+|2
+|
+# Pop B off the stack.
+# Pop A off the stack.
+# Option 1: trim trailing zeroes off A and B.
+# If B is longer than A, swap A and B.
+# For each byte in B, add it and previous overflow into the equivalent byte in A, remembering next overflow.
+# If there was final overflow, append a 1 byte to A.
+# Option 2: If there was no final overflow, remember last non-zero byte written into A, and truncate A after that point.
+# Either Option 1 or Option 2 MUST be implemented.
+|-
+|OP_1ADD
+|139
+|1
+|
+# Pop A off the stack.
+# Let B = 1, and continue as OP_ADD.
+|-
+|OP_SUB
+|148
+|2
+|
+# Pop B off the stack.
+# Pop A off the stack.
+# For each byte in B, subtract it and previous underflow from the equivalent byte in A, remembering next underflow.
+# If there was final overflow, fail.
+# Remember last non-zero byte written into A, and truncate A after that point.
+|-
+|OP_1SUB
+|140	
+|1
+|
+# Pop A off the stack.
+# Let B = 1, and continue as OP_SUB.
+|}
+
+====Rationale====
+
+These operations may seem overspecified, but our cost model requires that we only make a single pass over each parameter (with the exception of appending a final carry for add).  This is why each is defined to be done in-place rather than using a separate result vector.  Also, a naive implementation of add or subtract might simply trim trailing zeroes as a final step, which could violate our cost model.  For add this can be avoided by either pre-trimming the operands (option 1), or post-trimming the result (option 2).
+
+Subtraction underflow is illegal: even mathematicians agree the result would not be natural.
+
+===Variable Opcode Budget===
+
+Each opcode in v2 tapscript has a varops budget cost, based on the length of its operands.  This is simply the worst-case number of bytes used linearly (read, written or modified) in stack objects for a straightforward implementation.  This is also the expected way to implement almost all opcodes: where reasonably implementation details may incur additional costs, these are spelled out explicitly.  If an opcode must pass over the same data twice, it will incur twice the cost.  No opcode currently accesses randomly within stack objects: such an opcode would require an extension of this cost model.
+
+Opcodes which neither examine nor produce variable-length stack objects are assigned cost 0, and are not mentioned here.
+
+We do not consider the cost of the script interpretation itself: thus OP_PUSHDATA's cost is the number of bytes pushed, and OP_DUP is twice the number of bytes pushed.
+
+===Push Opcodes===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_PUSHDATA1
+|Length of data pushed on stack
+|-
+|OP_PUSHDATA2
+|Length of data pushed on stack
+|-
+|OP_PUSHDATA4
+|Length of data pushed on stack
+|}
+
+===Control And Simple Examination Opcodes===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_VERIFY
+|Operand length
+|-
+|OP_NOT
+|Operand length
+|-
+|OP_0NOTEQUAL
+|Operand length
+|-
+|OP_EQUAL
+|If length unequal: 0, otherwise lengths x 2
+|-
+|OP_EQUALVERIFY
+|If length unequal: 0, otherwise lengths x 2
+|}
+
+====Rationale====
+
+In the worst case, an implementation must examine every byte of a stack element to determine if the value is 0.  OP_IF and OP_NOTIF in tapscript require minimal values, so do not have this issue.
+
+Comparisons don't have to examine any data if the lengths are different.
+
+===Stack Manipulation===
+
+{|
+! Opcode
+! Varops Budget Cost
+! Equivalent Measure
+|-
+|OP_2DUP
+|(Sum of two operand lengths) x 2
+|(Sum of lengths of new stack entries) x 2
+|-
+|OP_3DUP
+|(Sum of three operand lengths) x 2
+|(Sum of lengths of new stack entries) x 2
+|-
+|OP_2OVER
+|(Sum of lengths of third and fourth-top stack entries (before)) x 2
+|(Sum of lengths of new stack entries) x 2
+|-
+|OP_IFDUP
+|Length of top stack entry (before) x 3
+|Length of top stack entry (before) x 3
+|-
+|OP_DUP
+|(Length of top stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|-
+|OP_OVER
+|(Length of second-time stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|-
+|OP_PICK
+|(Length of N-th-from-top stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|-
+|OP_TUCK
+|(Length of second-from-top stack entry (before)) x 2
+|(Length of new stack entry) x 2
+|}
+
+====Rationale====
+
+These operators read bytes from one stack entry, write to another.  OP_IFDUP has the same cost as OP_IF, with an optional OP_DUP if it is performed.
+
+
+===Splicing===
+
+{|
+! Opcode
+! Varops Budget Cost
+! Equivalent Measure
+|-
+|OP_CAT
+|(Sum of two operand lengths) x 2
+|(Lengths of new stack entry) x 2
+|-
+|OP_SUBSTR
+|(Sum of lengths of LEN and BEGIN operands) + (MIN(Value of first operand (LEN), Length of operand A - Value of BEGIN, 0) x 2
+|
+|-
+|OP_LEFT
+|Length of OFFSET operand
+|
+|-
+|OP_RIGHT
+|Length of OFFSET operand + (Length of A minus value of OFFSET, or 0 if OFFSET is greater) x 2
+|Length of OFFSET operand + (Length of new stack entry) x 2
+|}
+
+====Rationale====
+
+OP_SUBSTR may have to copy LEN bytes, but also needs to read its two numeric operands.  LEN is limited to the length of the operand minus BEGIN.  OP_LEFT only needs to read its OFFSET operand, whereas OP_RIGHT must copy the implied number of remaining bytes, which is necessarily more exact than the cost of OP_SUBSTR.
+
+===Bitwise Operators===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_INVERT
+|Length of operand
+|-
+|OP_AND
+|Sum of two operand lengths
+|-
+|OP_OR
+|(Lesser of the two operand lengths) x 2
+|-
+|OP_XOR
+|(Lesser of the two operand lengths) x 2
+|-
+|OP_UPSHIFT
+|Length of BITS + (Value of BITS) / 8.  If BITS % 8 == 0, add (Length of A) * 2, otherwise add (Length of A) * 3.
+|-
+|OP_DOWNSHIFT
+|Length of BITS + MAX((Length of A - (Value of BITS) / 8), 0) * 2.
+|}
+
+====Rationale====
+
+OP_AND, OP_OR and OP_XOR are assumed to fold the results into the longer of the two operands.  OP_AND must zero the remaining bytes past the shorter operand, but OP_OR and OP_XOR can stop at this point, so are cheaper.
+
+DOWNSHIFT needs to read the value of the second operand BITS.  It then needs to move the remainder of A (the part after offset BITS/8 bytes).
+
+UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying A and zeroing out remaining words).  If not moving an exact number of bytes (BITS % 8 != 0), another pass is needed to perform the bitshift.
+
+===Misc Operators===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+| OP_CHECKLOCKTIMEVERIFY
+| Length of operand
+|-
+| OP_CHECKSEQUENCEVERIFY
+| Length of operand
+|-
+| OP_VERIFY
+| Length of operand
+|-
+| OP_ROLL
+| Length of operand
+|-
+| OP_CHECKSIGADD
+| Length of number operand
+|}
+
+===Arithmetic Operators===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_ADD
+|Lesser of two operand lengths + (greater of two operand lengths) * 3
+|-
+|OP_1ADD
+|1 + operand length * 3
+|-
+|OP_SUB
+|Sum of two operand lengths
+|-
+|OP_1SUB
+|1 + operand length
+|-
+|OP_2MUL
+|Operand length x 3
+|-
+|OP_2DIV
+|Operand length
+|-
+|OP_MUL
+|Sum of operand lengths + (length(A) + 1) x (length(B) + 1) x 4
+|-
+|OP_DIV
+|FIXME
+|-
+|OP_MOD
+|FIXME
+|}
+
+====Rationale====
+
+OP_ADD is assumed to operate in-place on the longer operand.  In the worst case, carry can cause a modification of every byte and then a final copy operation to reallocate one more byte for the overflow.
+
+OP_SUB doesn't have this additional cost since it fails on underflow.
+
+OP_1ADD and OP_1SUB are the same cost as ADD/SUB with a minimal 1 operand.
+
+OP_2MUL and OP_2DIV are simply shifts, but OP_2MUL may have an extra copy on overflow.
+
+The exact OP_MUL calculation would be (length(A) in words) / 8 * (length(B) + 1) * 2.  For large values, the simplified formula given is equivalent.
+
+===Comparison Operators===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_BOOLAND
+|Sum of two operand lengths
+|-
+|OP_BOOLOR
+|Sum of two operand lengths
+|-
+|OP_NUMEQUAL
+|Sum of two operand lengths
+|-
+|OP_NUMEQUALVERIFY
+|Sum of two operand lengths
+|-
+|OP_NUMNOTEQUAL
+|Sum of two operand lengths
+|-
+|OP_LESSTHAN
+|Sum of two operand lengths
+|-
+|OP_GREATERTHAN
+|Sum of two operand lengths
+|-
+|OP_LESSTHANOREQUAL
+|Sum of two operand lengths
+|-
+|OP_GREATERTHANOREQUAL
+|Sum of two operand lengths
+|-
+|OP_MIN
+|Sum of two operand lengths
+|-
+|OP_MAX
+|Sum of two operand lengths
+|-
+|OP_WITHIN
+|First operand length x 2 + sum of other two operand lengths
+|}
+
+===Hash Operators===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_SHA256
+|(Length of the operand) x 8
+|-
+|OP_HASH160
+|(Length of the operand) x 8
+|-
+|OP_HASH256
+|(Length of the operand) x 8
+|}
+
+====Rationale====
+
+SHA256 has been well-optimized for current hardware: practical measurements put it within 8x of the speed of simple operations on large data.  Additional once-off steps such as the final SHA round, and RIPEMD or a second SHA256 are not proportional to the input, so are not included in the cost model.
+
+Other hashing routines are limited to their prior maximum inputs as detailed above.
+
+==Backwards compatibility==
+
+Segwitv2 was previously non-standard and defined to succeed, so this is a soft-fork which will not render any prior standard outputs unspendable.
+
+==Reference implementation==
+
+TBA
