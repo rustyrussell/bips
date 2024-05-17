@@ -22,7 +22,7 @@ This document is licensed under the 3-clause BSD license.
 
 These rules apply when executing a script for a 33-byte SegWit output with version number 1 (a "version 2 tapscript").
 
-A per-transaction "varops budget" is determined by multiplying the total transaction weight by the fixed factor 8250.
+A per-transaction "varops budget" is determined by multiplying the total transaction weight by the fixed factor 8250<ref>This number is a placeholder, on very loose benchmarking on a single machine.</ref>
 
 Opcodes consume budget as they are executed, based on the length (not generally the value) of their parameters as detailed below.  Opcodes not specified here consume no budget.  A transaction which exceeds its budget fails to validate.
 
@@ -606,14 +606,16 @@ The exact OP_MUL calculation would be (length(A) in words) / 8 * (length(B) + 1)
 ! Varops Budget Cost
 |-
 |OP_SHA256
-|(Length of the operand) x 8
+|(Length of the operand) x HASH_VAROP_COST_MULTIPLIER
 |-
 |OP_HASH160
-|(Length of the operand) x 8
+|(Length of the operand) x HASH_VAROP_COST_MULTIPLIER
 |-
 |OP_HASH256
-|(Length of the operand) x 8
+|(Length of the operand) x HASH_VAROP_COST_MULTIPLIER
 |}
+
+HASH_VAROP_COST_MULTIPLIER is 8.<ref>This number is another placeholder.  It's spelled "8" but it's pronounced "FIXME".</ref>
 
 ====Rationale====
 
