@@ -76,7 +76,7 @@ Negative numbers are not natively supported in v2 Tapscript.  Arbitrary precisio
 
 ===Enabled Opcodes===
 
-Twelve opcodes which were removed in v0.3.1 are re-enabled in v2 Tapscript.
+Fifteen opcodes which were removed in v0.3.1 are re-enabled in v2 Tapscript.
 
 If there are less than the required number of stack elements, these opcodes fail.  Equivalently, a requirement to pop off the stack which cannot be satisfied causes the opcode to fail.
 
@@ -105,7 +105,7 @@ Splice opcodes:
 # Pop BEGIN off the stack.
 # Pop A off the stack.
 # Remove BEGIN bytes from the front of A (all bytes if BEGIN greater than length of A).
-# If A is longer than LEN, truncate A to length LEN.
+# If length(A) is greater than value(LEN), truncate A to length value(LEN).
 # Push A onto the stack.
 |-
 |OP_LEFT
@@ -114,7 +114,7 @@ Splice opcodes:
 |
 # Pop OFFSET off the stack.
 # Pop A off the stack.
-# If A is longer than OFFSET, truncate A to length OFFSET.
+# If length(A) is greater than value(OFFSET), truncate A to length value(OFFSET).
 # Push A onto the stack.
 |-
 |OP_RIGHT
@@ -123,7 +123,7 @@ Splice opcodes:
 |
 # Pop OFFSET off the stack.
 # Pop A off the stack.
-# Remove OFFSET bytes from the front of A, or all bytes if OFFSET is greater than the length of A.
+# Remove value(OFFSET) bytes from the front of A, or all bytes if value(OFFSET) is greater than the length(A).
 # Push A onto the stack.
 |}
 
@@ -192,9 +192,9 @@ Note also that OP_UPSHIFT can produce huge results, and so must be checked for l
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
-# If A shifted by BITS would exceed the individual stack limit, fail.
-# If BITS % 8 == 0: simply prepend BITS / 8 zeroes to A.
-# Otherwise: prepend (BITS / 8) + 1 zeroes to A, then shift A *down* (8 - (BITS % 8)) bits.
+# If A shifted by value(BITS) would exceed the individual stack limit, fail.
+# If value(BITS) % 8 == 0: simply prepend value(BITS) / 8 zeroes to A.
+# Otherwise: prepend (value(BITS) / 8) + 1 zeroes to A, then shift A *down* (8 - (value(BITS) % 8)) bits.
 # Push A onto the stack.
 |-
 |OP_DOWNSHIFT
@@ -203,9 +203,9 @@ Note also that OP_UPSHIFT can produce huge results, and so must be checked for l
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
-# For OFF from BITS / 8 to length(A)-1:
+# For OFF from value(BITS) / 8 to length(A)-1:
     # Copy each byte from OFF, shifting by (BITS mod 8), to BITS / 8 bytes earlier in A.
-# Truncate A to remove OFF bytes (or all, if OFF > length of A).
+# Truncate A to remove value(OFF) bytes (or all, if value(OFF) > length(A)).
 # Push A onto the stack.
 |}
 
@@ -224,7 +224,7 @@ These cases can be computationally intensive, which is why the varops budget mus
 |1
 |
 # Pop A off the stack.
-# Shift each bytes 1 bits to the left (increasing values, equivalent to C's << operator), tracking the last non-zero value.
+# Shift each byte in A 1 bit to the left (increasing values, equivalent to C's << operator), tracking the last non-zero value.
 # If the final byte overflows, append a single 1 byte.
 # Otherwise, truncate A at the last non-zero byte.
 # Push A onto the stack.
@@ -234,7 +234,7 @@ These cases can be computationally intensive, which is why the varops budget mus
 |1
 |
 # Pop A off the stack.
-# Shift each bytes 1 bits to the right (decreasing values, equivalent to C's >> operator), tracking the last non-zero value.
+# Shift each byte 1 bit to the right (decreasing values, equivalent to C's >> operator), tracking the last non-zero value.
 # Truncate A at the last non-zero byte.
 # Push A onto the stack.
 |--
@@ -245,7 +245,7 @@ These cases can be computationally intensive, which is why the varops budget mus
 # Pop B off the stack.
 # Pop A off the stack.
 # Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
-# Allocate an all-zero vector R of length equal to the sum of the lengths of A and B.
+# Allocate an all-zero vector R of length equal to length(A) + length(B).
 # For each word in A, multiply it by B and add it into the vector R, offset by the word offset in A.
 # Push R onto the stack.
 |-
