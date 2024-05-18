@@ -253,13 +253,23 @@ These cases can be computationally intensive, which is why the varops budget mus
 |150
 |2
 |
-# FIXME!
+# Pop B off the stack.
+# Pop A off the stack.
+# Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
+# If B is empty or all zeroes, fail.
+# Perform division as per Knuth's The Art of Computer Programming v2 page 272, Algorithm D "Division of non-negative integers".
+# Trim trailing zeroes off the quotient.
+# Push the quotient onto the stack.
 |-
 |OP_MOD
 |151
 |2
 |
-# FIXME!
+# Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
+# If B is empty or all zeroes, fail.
+# Perform division as per Knuth's The Art of Computer Programming v2 page 272, Algorithm D "Division of non-negative integers".
+# Trim trailing zeroes off the remainder.
+# Push the remainder onto the stack.
 |}
 
 
@@ -545,13 +555,13 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 |Operand length
 |-
 |OP_MUL
-|Sum of operand lengths + (length(A) + 1) x (length(B) + 1) x 4
+|Length of A + length of B + (length of A + 7) / 8 * (length of B + 1) * 3
 |-
 |OP_DIV
-|FIXME
+|Length of A * 9 + length of B * 3 + 25 * (length of A)^2 / 128
 |-
 |OP_MOD
-|FIXME
+|Length of A * 7 + length of B * 4 + 25 * (length of A)^2 / 128
 |}
 
 ====Rationale====
@@ -564,7 +574,7 @@ OP_1ADD and OP_1SUB are the same cost as ADD/SUB with a minimal 1 operand.
 
 OP_2MUL and OP_2DIV are simply shifts, but OP_2MUL may have an extra copy on overflow.
 
-The exact OP_MUL calculation would be (length(A) in words) / 8 * (length(B) + 1) * 2.  For large values, the simplified formula given is equivalent.
+See Appendix A for the cost calculations for OP_MUL, OP_DIV and OP_MOD.
 
 ===Comparison Operators===
 
@@ -651,3 +661,55 @@ In alphabetical order:
 - Rijndael
 - Steven Roose
 - FIXME: your name here!
+
+==Appendix A: Cost Model Calculations for Multiply and Divide==
+
+Multiplication and division require multiple passes over the operands, meaning a cost proportional to the square of the lengths involved, and the word size used for that iteration makes a difference.  We assume 8 bytes (64 bits) at a time are evaluated, and the ability to multiply two 64-bit numbers and receive a 128-bit result, and divide a 128-bit number by a 64 bit number to receive a 128 bit quotient and remainder.  This is true on modern 64-bit CPUs (sometimes using multiple instructions).
+
+===Multiplication Cost====
+
+For multiplication, the steps break down like so:
+1. Allocate and zero the result: cost = length(A) + length(B)
+2. For each word in A:
+  * Multiply by each word in B, into a scratch vector: cost = 2 * (length(B) + 1)
+  * Sum scratch vector at the word offset into the result: cost = (length(B) + 1).
+
+[FIXME: we do not assume an implementation of vector multiply-and-add which would reduce this internal cost from 3 * (length(B) + 1) to 2 * (length(B) + 1)]
+[FIXME: Note: we do not assume Karatsuba, Tom-Cooke or other optimizations.]
+
+This results in a cost of: length(A) + length(B) + (length(A) + 7) / 8 * (length(B) + 1) * 3.
+
+This is asymmetric (and noticibly so if one length is large and the other small), and suggests choosing A as the larger operand: in practice an implementation usually finds that CPU pipelining means choosing B as the larger operand is optimal.
+
+[FIXME: is there a symmetric approximation which still matches practical results, including large A / tiny B and vice-versa?]
+
+===Division Cost====
+
+For division, the steps break down like so:
+
+1. Bit shift both operands to set top bit of v2 (see OP_UPSHIFT): cost = length(A) * 3 + length(B) * 3
+
+2. Trim trailing bytes.  This costs according to the number of byte removed, but since that is subtractive on future costs, we ignore it.
+
+3. Compare (v1 is longer at this stage): cost = length(A) * length(B)
+
+4. Subtract: cost = length(A) * length(B)
+
+5. for (length(A) - NormalizedLength(B)) in words:
+   1. Multiply word by B -> scratch: cost = NormalizedLength(B) * 2
+   2. Subtract scratch from A: cost = length(A) + NormalizedLength(B)
+   3. Add B into A: cost = length(A) + NormalizedLength(B)
+   4. Shrink A by 1 word.
+
+6. OP_MOD: shift A down, trim trailing zeros: cost = length(A) * 2
+
+7. OP_DIV: trim trailing zeros: cost = length(A)
+
+Firstly, that the loop at step 5 shrinks A every time, so the *average* cost of each iteration is NormalizedLength(B) * 4 + length(A).  The cost of step 5 is:
+
+	(length(A) - NormalizedLength(B)) / 8 * NormalizedLength(B) * 4 + length(A)
+
+NormalizedLength(B) is somewhere between length(A) and 0, inclusive (if the normalized B was larger than the normalized A we would have exited already).  The maximum cost for this step is when NormalizedLength(B) = 3 * length(A) / 8.  This gives a worst-case cost of 25/128 * length(A)^2.
+
+OP_DIV cost: length(A) * 9 + length(B) * 3 + 25 * length(A)^2 / 128
+OP_MOD cost: length(A) * 7 + length(B) * 4 + 25 * length(A)^2 / 128
