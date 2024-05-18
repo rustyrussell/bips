@@ -1,7 +1,7 @@
 <pre>
   BIP: ?
   Layer: Consensus (soft fork)
-  Title: Segwit Version 2 Script Interpretation
+  Title: Tapscript Version 2 Script Interpretation
   Author: Rusty Russell <rusty@rustcorp.com.au>
   Comments-URI: TBA
   Status: Draft
@@ -14,15 +14,17 @@
 
 Bitcoin v0.3.1 removed and reduced Bitcoin Script significantly, to avoid multiple denial-of-service issues.  This specification seeks to restore much of that functionality in a new tapscript version (v2), using a weight-based budget for opcodes which deal with variable-length stack values.  This allows the prior limit of 520 bytes per stack entry to be relaxed, and numerical values to be arbitrary length.
 
+[FIXME: Look for FIXME for asides and notes on known areas for improvement, reconsideration and bikeshedding!]
+
 ==Copyright==
 
 This document is licensed under the 3-clause BSD license.
 
 ==Specification==
 
-These rules apply when executing a script for a 33-byte SegWit output with version number 1 (a "version 2 tapscript").
+These rules apply when executing a script for a 33-byte SegWit output with version number 1 (a "version 2 tapscript"). [FIXME: is this where we're going?]
 
-A per-transaction "varops budget" is determined by multiplying the total transaction weight by the fixed factor 8250<ref>This number is a placeholder, on very loose benchmarking on a single machine.</ref>
+A per-transaction "varops budget" is determined by multiplying the total transaction weight by the fixed factor 8250[FIXME: This number is a placeholder, on very loose benchmarking on a single machine.]
 
 Opcodes consume budget as they are executed, based on the length (not generally the value) of their parameters as detailed below.  Opcodes not specified here consume no budget.  A transaction which exceeds its budget fails to validate.
 
@@ -36,19 +38,27 @@ When large stack objects are permitted, much of the bottleneck for script operat
 
 All current opcodes can be reasonably implemented using linear accesses to stack data (though sometimes multiple times), and this inspires a simple "worst case per byte of stack access" cost model using the length of the stack inputs (or occasionally, outputs).
 
-We assume that both non-hash computation and the manipulation of the stack vector itself (e.g. OP_DROP) are negligible.
+- We assume that the manipulation of the stack vector itself (e.g. OP_DROP) is negligible.
+- We assume that non-hash computation is negligible.
+- We assume an implementation uses simple linear arrays/vectors of contiguous memory.
+- A read of a stack object costs 1 unit per byte (e.g. OP_VERIFY).
+- A write or read/write operation on a stack object costs 1 unit per byte (e.g. OP_INVERT).
+- Prepending or appending bytes to a stack object costs 2 units per original byte (reallocation may copy) plus one unit per new byte.
+- We dictate where operations can be done in-place.
 
 Hashing operations also have a multiplier beyond their raw byte input, based on approximate additional CPU cost per byte.  The budget for signature operations is subsumed into the varops budget, by simply consuming 8250 * 50 varops per CHECKSIG operation.
 
-The aim is to limit worst-case script evaluation timing, without meaningfully impacting any useful script operations.  Note that an opcode implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a signficantly worse worst-case behaviour would be exploitable.
+The aim is to limit worst-case script evaluation timing, without meaningfully impacting any useful script operations.  Note that an implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a signficantly worse worst-case behaviour would be problematic.
+
+In particular, costs are based on worst-case behavior (which often does not occur) and budget limits are based on maximum stack element sizes (where smaller, cache-hot elements will be significantly faster).
 
 ===Limits===
 
-The individual stack entry limit of 520 bytes is increased to the total block weight (4000000) bytes.  An additional gross limit of twice that applies across all stack entries.  The limit of 1000 total stack entries remains.
+The individual stack entry limit of 520 bytes is increased to the total block weight (4000000) bytes.  An additional gross limit of twice that (8000000) applies across all stack entries.  The limit of 1000 total stack entries remains.
 
 The budget per transaction weight is derived as follows on a variety of plaforms:
 1. The time taken to verify a Schnorr signature
-2. The time taken for a simple operation on a maximal (4000000 byte) stack entry (i.e. a budget cost of 4000000) 
+2. The time taken for simple operations on maximal (4000000 byte) stack entries
 
 From this, we can establish the value of a single varop budget, and determine how much budget would be equivalent to the already-established worst-case signature validation (80,000 CHECKSIG operations).  This would be the total budget for a maximal (4,000,000 weight) block.
 
@@ -328,15 +338,15 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 
 These operations may seem overspecified, but our cost model requires that we only make a single pass over each parameter (with the exception of appending a final carry for add).  This is why each is defined to be done in-place rather than using a separate result vector.  Also, a naive implementation of add or subtract might simply trim trailing zeroes as a final step, which could violate our cost model.  For add this can be avoided by either pre-trimming the operands (option 1), or post-trimming the result (option 2).
 
-Subtraction underflow is illegal: even mathematicians agree the result would not be natural.
+Subtraction underflow is illegal: mathematicians agree the result would not be natural.
 
 ===Variable Opcode Budget===
 
-Each opcode in v2 tapscript has a varops budget cost, based on the length of its operands.  This is simply the worst-case number of bytes used linearly (read, written or modified) in stack objects for a straightforward implementation.  This is also the expected way to implement almost all opcodes: where reasonably implementation details may incur additional costs, these are spelled out explicitly.  If an opcode must pass over the same data twice, it will incur twice the cost.  No opcode currently accesses randomly within stack objects: such an opcode would require an extension of this cost model.
+Each opcode in v2 tapscript has a varops budget cost, based on the length of its operands or results.  This is simply the worst-case number of bytes used linearly (read, written or modified) in stack objects for a straightforward implementation.  This is also the expected way to implement almost all opcodes: where reasonably implementation details may incur additional costs, these are spelled out explicitly.  If an opcode must pass over the same data twice, it will incur twice the cost.  No opcode currently accesses randomly within stack objects: such an opcode would require an extension of this cost model.
 
 Opcodes which neither examine nor produce variable-length stack objects are assigned cost 0, and are not mentioned here.
 
-We do not consider the cost of the script interpretation itself: thus OP_PUSHDATA's cost is the number of bytes pushed, and OP_DUP is twice the number of bytes pushed.
+We do not consider the cost of the script interpretation itself: thus OP_PUSHDATA's cost is the number of bytes pushed, whereas OP_DUP is twice the number of bytes pushed.
 
 ===Push Opcodes===
 
@@ -615,18 +625,29 @@ The exact OP_MUL calculation would be (length(A) in words) / 8 * (length(B) + 1)
 |(Length of the operand) x HASH_VAROP_COST_MULTIPLIER
 |}
 
-HASH_VAROP_COST_MULTIPLIER is 8.<ref>This number is another placeholder.  It's spelled "8" but it's pronounced "FIXME".</ref>
+HASH_VAROP_COST_MULTIPLIER is 8.[FIXME: This number is another placeholder.  It's spelled "8" but it's pronounced "FIXME"]
 
 ====Rationale====
 
-SHA256 has been well-optimized for current hardware: practical measurements put it within 8x of the speed of simple operations on large data.  Additional once-off steps such as the final SHA round, and RIPEMD or a second SHA256 are not proportional to the input, so are not included in the cost model.
+SHA256 has been well-optimized for current hardware: practical measurements put it within 8x[FIXME] of the speed of simple operations on large data.  Additional once-off steps such as the final SHA round, and RIPEMD or a second SHA256 are not proportional to the input, so are not included in the cost model.
 
 Other hashing routines are limited to their prior maximum inputs as detailed above.
 
 ==Backwards compatibility==
 
-Segwitv2 was previously non-standard and defined to succeed, so this is a soft-fork which will not render any prior standard outputs unspendable.
+[FIXME Depends on method: segwit v2 or 33-byte segwit v1 witness program.  Either was  was previously non-standard and defined to succeed, so this is a soft-fork which will not render any prior standard outputs unspendable.]
 
 ==Reference implementation==
 
 TBA
+
+==Thanks==
+
+This BIP would not exist without the thoughful contributions of coders who considered all the facets carefully and thoroughly, and also my wife Alex who has been tirelessly supportive of my esoteric-seeming endeavors such as this!
+
+In alphabetical order:
+- Alex Russell
+- Brandon Black (aka Reardencode)
+- Rijndael
+- Steven Roose
+- FIXME: your name here!
