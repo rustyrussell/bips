@@ -373,22 +373,6 @@ We do not consider the cost of the script interpretation itself, which is necess
 
 There are various places where script interprets a value as a length.  In practice these all have a well-known upper bound, but the operand (potentially 4MB worth) has to be examined past the first 64 bytes to ensure the remainder is zero.  These are annotated as "LENGTHCONV" and costed as a COMPARINGZERO operation.
 
-===Push Opcodes===
-
-{|
-! Opcode
-! Varops Budget Cost
-|-
-|OP_PUSHDATA1
-|Length of data copied onto stack (COPYING)
-|-
-|OP_PUSHDATA2
-|Length of data copied onto stack (COPYING)
-|-
-|OP_PUSHDATA4
-|Length of data copied onto stack (COPYING)
-|}
-
 ===Control And Simple Examination Opcodes===
 
 {|
@@ -544,7 +528,7 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 | Length of operand (LENGTHCONV)
 |-
 | OP_CHECKSIGADD (LENGTHCONV)
-| Length of number operand
+| Length of number operand (*in addition to CHECKSIG cost)
 |}
 
 ===Arithmetic Operators===
