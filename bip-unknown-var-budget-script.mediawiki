@@ -24,7 +24,7 @@ This document is licensed under the 3-clause BSD license.
 
 These rules apply when executing a script for a 33-byte SegWit output with version number 1 (a "version 2 tapscript"). [FIXME: is this where we're going?]
 
-A per-transaction "varops budget" is determined by multiplying the total transaction weight by the fixed factor 8250[FIXME: This number is a placeholder, on very loose benchmarking on a single machine.]
+A per-transaction "varops budget" is determined by multiplying the total transaction weight by the fixed factor 5200.
 
 Opcodes consume budget as they are executed, based on the length (not generally the value) of their parameters as detailed below.  Opcodes not specified here consume no budget.  A transaction which exceeds its budget fails to validate.
 
@@ -34,23 +34,23 @@ The individual stack entry limit of 520 bytes is replaced by a larger individual
 
 ===A Model For Opcodes Dealing With Stack Data===
 
-When large stack objects are permitted, much of the bottleneck for script operations is based on the cache footprint of the stack data it accesses; the exceptions being hashing and signature operations.
+When large stack objects are permitted, the bottleneck for script operations is based on the time taken to process the stack data it accesses (the exceptions being signature operations).
 
-All current opcodes can be reasonably implemented using linear accesses to stack data (though sometimes multiple times), and this inspires a simple "worst case per byte of stack access" cost model using the length of the stack inputs (or occasionally, outputs).
+All current opcodes are most reasonably implemented using linear accesses to stack data (though sometimes multiple times), so the cost model uses the length of the stack inputs (or occasionally, outputs).
 
 - We assume that the manipulation of the stack vector itself (e.g. OP_DROP) is negligible.
-- We assume that non-hash computation is negligible.
 - We assume an implementation uses simple linear arrays/vectors of contiguous memory.
-- A read of a stack object costs 1 unit per byte (e.g. OP_VERIFY).
-- A write or read/write operation on a stack object costs 1 unit per byte (e.g. OP_INVERT).
-- Prepending or appending bytes to a stack object costs 2 units per original byte (reallocation may copy) plus one unit per new byte.
-- We dictate where operations can be done in-place.
+- Specific operations are defined as "fast", as their implementations have been empirically demonstated to be optimized: comparing bytes, comparing bytes against zero, copying bytes and zeroing bytes.  These cost 1 unit per byte.
+- SHA256 is a special operation which costs 10 units per byte.
+- Other operations are defined as "slow": these cost 2 units per byte.
 
-Hashing operations also have a multiplier beyond their raw byte input, based on approximate additional CPU cost per byte.  The budget for signature operations is subsumed into the varops budget, by simply consuming 8250 * 50 varops per CHECKSIG operation.
+The budget for signature operations is subsumed into the varops budget, by simply consuming 5200 * 50 varops per CHECKSIG operation. [FIXME: After the first "free" one?]
 
 The aim is to limit worst-case script evaluation timing, without meaningfully impacting any useful script operations.  Note that an implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a signficantly worse worst-case behaviour would be problematic.
 
 In particular, costs are based on worst-case behavior (which often does not occur) and budget limits are based on maximum stack element sizes (where smaller, cache-hot elements will be significantly faster).
+
+The worst case behaviour for a previously-possible stack entry is SHA256 of 520 bytes: this costs 5200 varops budget, which could be paid for by the OP_SHA256 opcode itself.  This shows trivially that all previously-existing operations come within budget under this BIP.
 
 ===Limits===
 
@@ -60,7 +60,9 @@ The budget per transaction weight is derived as follows on a variety of plaforms
 1. The time taken to verify a Schnorr signature
 2. The time taken for simple operations on maximal (4000000 byte) stack entries
 
-From this, we can establish the value of a single varop budget, and determine how much budget would be equivalent to the already-established worst-case signature validation (80,000 CHECKSIG operations).  This would be the total budget for a maximal (4,000,000 weight) block.
+From this, we can establish the value of a single varop budget, and determine how much budget would be equivalent to the already-established worst-case signature validation (80,000 Schnorr signature validations).  While CHECKSIG can be done in parallel, it also involves hashing, which is not taken into account here (the worst-case being signficant slower than the signature validations themselves).
+
+This would be the total budget for a maximal (4,000,000 weight) block.
 
 ===SUCCESS Opcodes===
 
@@ -247,6 +249,7 @@ These cases can be computationally intensive, which is why the varops budget mus
 # Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
 # Allocate an all-zero vector R of length equal to length(A) + length(B).
 # For each word in A, multiply it by B and add it into the vector R, offset by the word offset in A.
+# Truncate R at the last non-zero byte.
 # Push R onto the stack.
 |-
 |OP_DIV
@@ -352,11 +355,23 @@ Subtraction underflow is illegal: mathematicians agree the result would not be n
 
 ===Variable Opcode Budget===
 
-Each opcode in v2 tapscript has a varops budget cost, based on the length of its operands or results.  This is simply the worst-case number of bytes used linearly (read, written or modified) in stack objects for a straightforward implementation.  This is also the expected way to implement almost all opcodes: where reasonably implementation details may incur additional costs, these are spelled out explicitly.  If an opcode must pass over the same data twice, it will incur twice the cost.  No opcode currently accesses randomly within stack objects: such an opcode would require an extension of this cost model.
+Each opcode in v2 tapscript has a varops budget cost, based on the length of data processed.
+
+- COMPARING: Comparing two objects: cost = 1 per byte compared.
+- COMPARINGZERO: Comparing an object against zeroes: cost = 1 per byte compared.
+- ZEROING: Zeroing out bytes: cost = 1 per byte zeroed
+- COPYING: Copying bytes: cost = 1 per byte copied.
+- All other operations: cost = 2 per byte.
+
+In practice, this mirrors the measured speed of implementations on a modern CPU quite well.  Note that comparing an array against zeros can be done by comparing the first few bytes then an offset comparison with itself.
+
+Some operations have corner cases which require more than one pass over the operands, and these are defined carefully below.  No opcode currently accesses randomly within stack objects: such an opcode would require an extension of this cost model.
 
 Opcodes which neither examine nor produce variable-length stack objects are assigned cost 0, and are not mentioned here.
 
-We do not consider the cost of the script interpretation itself: thus OP_PUSHDATA's cost is the number of bytes pushed, whereas OP_DUP is twice the number of bytes pushed.
+We do not consider the cost of the script interpretation itself, which is necessarily limited by block size.
+
+There are various places where script interprets a value as a length.  In practice these all have a well-known upper bound, but the operand (potentially 4MB worth) has to be examined past the first 64 bytes to ensure the remainder is zero.  These are annotated as "LENGTHCONV" and costed as a COMPARINGZERO operation.
 
 ===Push Opcodes===
 
@@ -365,13 +380,13 @@ We do not consider the cost of the script interpretation itself: thus OP_PUSHDAT
 ! Varops Budget Cost
 |-
 |OP_PUSHDATA1
-|Length of data pushed on stack
+|Length of data copied onto stack (COPYING)
 |-
 |OP_PUSHDATA2
-|Length of data pushed on stack
+|Length of data copied onto stack (COPYING)
 |-
 |OP_PUSHDATA4
-|Length of data pushed on stack
+|Length of data copied onto stack (COPYING)
 |}
 
 ===Control And Simple Examination Opcodes===
@@ -381,24 +396,26 @@ We do not consider the cost of the script interpretation itself: thus OP_PUSHDAT
 ! Varops Budget Cost
 |-
 |OP_VERIFY
-|Operand length
+|Operand length (COMPARINGZERO)
 |-
 |OP_NOT
-|Operand length
+|Operand length (COMPARINGZERO)
 |-
 |OP_0NOTEQUAL
-|Operand length
+|Operand length (COMPARINGZERO)
 |-
 |OP_EQUAL
-|If length unequal: 0, otherwise lengths x 2
+|If length unequal: 0, otherwise length (COMPARING)
 |-
 |OP_EQUALVERIFY
-|If length unequal: 0, otherwise lengths x 2
+|If length unequal: 0, otherwise length (COMPARING)
 |}
 
 ====Rationale====
 
-In the worst case, an implementation must examine every byte of a stack element to determine if the value is 0.  OP_IF and OP_NOTIF in tapscript require minimal values, so do not have this issue.
+In the worst case, an implementation must examine every byte of a stack element to determine if the value is 0.  This can be done efficiently using existing comparison techniques, by examining the first byte, and then using a offet comparison against itself.
+
+OP_IF and OP_NOTIF in tapscript require minimal values, so do not have this issue.
 
 Comparisons don't have to examine any data if the lengths are different.
 
@@ -410,41 +427,46 @@ Comparisons don't have to examine any data if the lengths are different.
 ! Equivalent Measure
 |-
 |OP_2DUP
-|(Sum of two operand lengths) x 2
-|(Sum of lengths of new stack entries) x 2
+|Sum of two operand lengths (COPYING)
+|Sum of lengths of new stack entries
 |-
 |OP_3DUP
-|(Sum of three operand lengths) x 2
-|(Sum of lengths of new stack entries) x 2
+|Sum of three operand lengths (COPYING)
+|Sum of lengths of new stack entries
 |-
 |OP_2OVER
-|(Sum of lengths of third and fourth-top stack entries (before)) x 2
-|(Sum of lengths of new stack entries) x 2
+|Sum of lengths of third and fourth-top stack entries (before) (COPYING)
+|Sum of lengths of new stack entries
 |-
 |OP_IFDUP
-|Length of top stack entry (before) x 3
-|Length of top stack entry (before) x 3
+|(Length of top stack entry (before)) x 2 (COMPARINGZERO + COPYING)
+|
 |-
 |OP_DUP
-|(Length of top stack entry (before)) x 2
-|(Length of new stack entry) x 2
+|Length of top stack entry (before) (COPYING)
+|Length of new stack entry
 |-
 |OP_OVER
-|(Length of second-time stack entry (before)) x 2
-|(Length of new stack entry) x 2
+|Length of second-top stack entry (before) (COPYING)
+|Length of new stack entry
 |-
 |OP_PICK
-|(Length of N-th-from-top stack entry (before)) x 2
-|(Length of new stack entry) x 2
+|Length of top stack entry + Length of N-th-from-top stack entry (before) (LENGTHCONV + COPYING)
+|Length of new stack entry
 |-
 |OP_TUCK
-|(Length of second-from-top stack entry (before)) x 2
-|(Length of new stack entry) x 2
+|Length of second-from-top stack entry (before) (COPYING)
+|Length of new stack entry
+|-
+|OP_ROLL
+|Length of top stack entry (LENGTHCONV)
+|
+|-
 |}
 
 ====Rationale====
 
-These operators read bytes from one stack entry, write to another.  OP_IFDUP has the same cost as OP_IF, with an optional OP_DUP if it is performed.
+These operators copy a stack entry, write to another.  OP_IFDUP has the same worst-case cost as OP_IF + OP_DUP.
 
 
 ===Splicing===
@@ -455,20 +477,20 @@ These operators read bytes from one stack entry, write to another.  OP_IFDUP has
 ! Equivalent Measure
 |-
 |OP_CAT
-|(Sum of two operand lengths) x 2
-|(Lengths of new stack entry) x 2
+|Sum of two operand lengths (COPYING)
+|Length of new stack entry
 |-
 |OP_SUBSTR
-|(Sum of lengths of LEN and BEGIN operands) + (MIN(Value of first operand (LEN), Length of operand A - Value of BEGIN, 0) x 2
+|(Sum of lengths of LEN and BEGIN operands) + MIN(Value of first operand (LEN), Length of operand A - Value of BEGIN, 0) (LENGTHCONV + COPYING)
 |
 |-
 |OP_LEFT
-|Length of OFFSET operand
+|Length of OFFSET operand (LENGTHCONV)
 |
 |-
 |OP_RIGHT
-|Length of OFFSET operand + (Length of A minus value of OFFSET, or 0 if OFFSET is greater) x 2
-|Length of OFFSET operand + (Length of new stack entry) x 2
+|Length of OFFSET operand + MAX(Length of A - Value of OFFSET, 0) (LENGTHCONV + COPYING)
+|Length of OFFSET operand + Length of new stack entry
 |}
 
 ====Rationale====
@@ -482,10 +504,10 @@ OP_SUBSTR may have to copy LEN bytes, but also needs to read its two numeric ope
 ! Varops Budget Cost
 |-
 |OP_INVERT
-|Length of operand
+|(Length of operand) * 2
 |-
 |OP_AND
-|Sum of two operand lengths
+|Greater of the operand lengths + lesser of the two operand lengths
 |-
 |OP_OR
 |(Lesser of the two operand lengths) x 2
@@ -494,15 +516,16 @@ OP_SUBSTR may have to copy LEN bytes, but also needs to read its two numeric ope
 |(Lesser of the two operand lengths) x 2
 |-
 |OP_UPSHIFT
-|Length of BITS + (Value of BITS) / 8.  If BITS % 8 == 0, add (Length of A) * 2, otherwise add (Length of A) * 3.
+|Length of BITS + (Value of BITS) / 8 + Length of A (LENGTHCONV + ZEROING + COPYING).  If BITS % 8 != 0, add (Length of A) * 2.
 |-
 |OP_DOWNSHIFT
-|Length of BITS + MAX((Length of A - (Value of BITS) / 8), 0) * 2.
+|Length of BITS + MAX((Length of A - (Value of BITS) / 8), 0) * 2
 |}
 
 ====Rationale====
 
-OP_AND, OP_OR and OP_XOR are assumed to fold the results into the longer of the two operands.  OP_AND must zero the remaining bytes past the shorter operand, but OP_OR and OP_XOR can stop at this point, so are cheaper.
+OP_AND, OP_OR and OP_XOR are assumed to fold the results into the longer of the two operands.  This is a "slow" operation (i.e. cost is 2 per byte), but
+OP_AND needs to do this until one operand is exhausted, and then zero the rest.   OP_OR and OP_XOR can stop at as soon as the shorter operand is exhausted.
 
 DOWNSHIFT needs to read the value of the second operand BITS.  It then needs to move the remainder of A (the part after offset BITS/8 bytes).
 
@@ -515,18 +538,12 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 ! Varops Budget Cost
 |-
 | OP_CHECKLOCKTIMEVERIFY
-| Length of operand
+| Length of operand (LENGTHCONV)
 |-
 | OP_CHECKSEQUENCEVERIFY
-| Length of operand
+| Length of operand (LENGTHCONV)
 |-
-| OP_VERIFY
-| Length of operand
-|-
-| OP_ROLL
-| Length of operand
-|-
-| OP_CHECKSIGADD
+| OP_CHECKSIGADD (LENGTHCONV)
 | Length of number operand
 |}
 
@@ -537,36 +554,36 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 ! Varops Budget Cost
 |-
 |OP_ADD
-|Lesser of two operand lengths + (greater of two operand lengths) * 3
+|Greater of two operand lengths * 3
 |-
 |OP_1ADD
-|1 + operand length * 3
+|Operand length * 3
 |-
 |OP_SUB
-|Sum of two operand lengths
+|Greater of two operand lengths * 2
 |-
 |OP_1SUB
-|1 + operand length
+|Operand length * 2
 |-
 |OP_2MUL
-|Operand length x 3
+|Operand length * 3
 |-
 |OP_2DIV
-|Operand length
+|Operand length * 2
 |-
 |OP_MUL
-|Length of A + length of B + (length of A + 7) / 8 * (length of B + 1) * 3
+|Length of A + length of B + (length of A + 7) / 8 * (length of B) * 4
 |-
 |OP_DIV
-|Length of A * 9 + length of B * 3 + 25 * (length of A)^2 / 128
+|Length of A * 9 + length of B * 2 + (length of A)^2 / 4
 |-
 |OP_MOD
-|Length of A * 7 + length of B * 4 + 25 * (length of A)^2 / 128
+|Length of A * 9 + length of B * 2 + (length of A)^2 / 4
 |}
 
 ====Rationale====
 
-OP_ADD is assumed to operate in-place on the longer operand.  In the worst case, carry can cause a modification of every byte and then a final copy operation to reallocate one more byte for the overflow.
+The worst case for OP_ADD is that an overflow at the end requires a reallocation.
 
 OP_SUB doesn't have this additional cost since it fails on underflow.
 
@@ -616,7 +633,7 @@ See Appendix A for the cost calculations for OP_MUL, OP_DIV and OP_MOD.
 |Sum of two operand lengths
 |-
 |OP_WITHIN
-|First operand length x 2 + sum of other two operand lengths
+|3rd from stack top operand length x 2 + sum of other two operand lengths
 |}
 
 ===Hash Operators===
@@ -626,16 +643,14 @@ See Appendix A for the cost calculations for OP_MUL, OP_DIV and OP_MOD.
 ! Varops Budget Cost
 |-
 |OP_SHA256
-|(Length of the operand) x HASH_VAROP_COST_MULTIPLIER
+|(Length of the operand) x 10
 |-
 |OP_HASH160
-|(Length of the operand) x HASH_VAROP_COST_MULTIPLIER
+|(Length of the operand) x 10
 |-
 |OP_HASH256
-|(Length of the operand) x HASH_VAROP_COST_MULTIPLIER
+|(Length of the operand) x 10
 |}
-
-HASH_VAROP_COST_MULTIPLIER is 8.[FIXME: This number is another placeholder.  It's spelled "8" but it's pronounced "FIXME"]
 
 ====Rationale====
 
@@ -669,47 +684,45 @@ Multiplication and division require multiple passes over the operands, meaning a
 ===Multiplication Cost====
 
 For multiplication, the steps break down like so:
-1. Allocate and zero the result: cost = length(A) + length(B)
+1. Allocate and zero the result: cost = length(A) + length(B) (ZEROING)
 2. For each word in A:
-  * Multiply by each word in B, into a scratch vector: cost = 2 * (length(B) + 1)
-  * Sum scratch vector at the word offset into the result: cost = (length(B) + 1).
+  * Multiply by each word in B, into a scratch vector: cost = 2 * length(B)
+  * Sum scratch vector at the word offset into the result: cost = 2 * length(B)
 
-[FIXME: we do not assume an implementation of vector multiply-and-add which would reduce this internal cost from 3 * (length(B) + 1) to 2 * (length(B) + 1)]
 [FIXME: Note: we do not assume Karatsuba, Tom-Cooke or other optimizations.]
 
-This results in a cost of: length(A) + length(B) + (length(A) + 7) / 8 * (length(B) + 1) * 3.
+This results in a cost of: length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 4.
 
-This is asymmetric (and noticibly so if one length is large and the other small), and suggests choosing A as the larger operand: in practice an implementation usually finds that CPU pipelining means choosing B as the larger operand is optimal.
-
-[FIXME: is there a symmetric approximation which still matches practical results, including large A / tiny B and vice-versa?]
+This is slight asymmetric: in practice an implementation usually finds that CPU pipelining means choosing B as the larger operand is optimal.
 
 ===Division Cost====
 
 For division, the steps break down like so:
 
-1. Bit shift both operands to set top bit of v2 (see OP_UPSHIFT): cost = length(A) * 3 + length(B) * 3
+1. Bit shift both operands to set top bit of B (OP_UPSHIFT, without overflow for B): cost = length(A) * 3 + length(B) * 2
 
 2. Trim trailing bytes.  This costs according to the number of byte removed, but since that is subtractive on future costs, we ignore it.
 
-3. Compare (v1 is longer at this stage): cost = length(A) * length(B)
+3. If B is longer, the answer is 0 already.  So assume A is longer from now on (or equal length).
 
-4. Subtract: cost = length(A) * length(B)
+4. Compare: cost = length(A) * 2
+
+4. Subtract: cost = length(A) * 2
 
 5. for (length(A) - NormalizedLength(B)) in words:
    1. Multiply word by B -> scratch: cost = NormalizedLength(B) * 2
-   2. Subtract scratch from A: cost = length(A) + NormalizedLength(B)
-   3. Add B into A: cost = length(A) + NormalizedLength(B)
+   2. Subtract scratch from A: cost = length(A) * 2
+   3. Add B into A: cost = length(A) * 2
    4. Shrink A by 1 word.
 
 6. OP_MOD: shift A down, trim trailing zeros: cost = length(A) * 2
 
-7. OP_DIV: trim trailing zeros: cost = length(A)
+7. OP_DIV: trim trailing zeros: cost = length(A) * 2
 
-Firstly, that the loop at step 5 shrinks A every time, so the *average* cost of each iteration is NormalizedLength(B) * 4 + length(A).  The cost of step 5 is:
+Note that the loop at step 5 shrinks A every time, so the *average* cost of each iteration is NormalizedLength(B) + length(A) * 2.  The cost of step 5 is:
 
-	(length(A) - NormalizedLength(B)) / 8 * NormalizedLength(B) * 4 + length(A)
+	(length(A) - NormalizedLength(B)) / 8 * (NormalizedLength(B) + length(A) * 2)
 
-NormalizedLength(B) is somewhere between length(A) and 0, inclusive (if the normalized B was larger than the normalized A we would have exited already).  The maximum cost for this step is when NormalizedLength(B) = 3 * length(A) / 8.  This gives a worst-case cost of 25/128 * length(A)^2.
+The worst case here if is NormalizedLength(B) is 0: length(A) * length(A) / 4.
 
-OP_DIV cost: length(A) * 9 + length(B) * 3 + 25 * length(A)^2 / 128
-OP_MOD cost: length(A) * 7 + length(B) * 4 + 25 * length(A)^2 / 128
+The cost for the all the steps in either case is: length(A) * 9 + length(B) * 2 + length(A) * length(A) / 4.
