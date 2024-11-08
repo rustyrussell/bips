@@ -299,6 +299,10 @@ These opcodes are redefined in v2 Tapscript to write numbers to the stack as min
 2. OP_DEPTH
 3. OP_SIZE
 
+In addition, the success requirement in BIP-342 is modified to require a non-zero variable-length unsigned integer value (not <code>CastToBool()</code>):
+
+# If the execution results in anything but exactly one element on the stack which contains one or more non-zero bytes, fail.
+
 ===Extended Opcodes===
 
 The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to operate on variable-length unsigned integers.  These always produce minimal values (no trailing zero bytes).
