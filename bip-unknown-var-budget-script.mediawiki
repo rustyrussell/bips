@@ -423,7 +423,7 @@ Comparisons don't have to examine any data if the lengths are different.
 |Sum of lengths of new stack entries
 |-
 |OP_IFDUP
-|(Length of top stack entry (before)) x 2 (COMPARINGZERO + COPYING)
+|(Length of top stack entry (before)) * 2 (COMPARINGZERO + COPYING)
 |
 |-
 |OP_DUP
@@ -436,7 +436,7 @@ Comparisons don't have to examine any data if the lengths are different.
 |-
 |OP_PICK
 |Length of top stack entry + Length of N-th-from-top stack entry (before) (LENGTHCONV + COPYING)
-|Length of new stack entry
+|-
 |-
 |OP_TUCK
 |Length of second-from-top stack entry (before) (COPYING)
@@ -491,13 +491,13 @@ OP_SUBSTR may have to copy LEN bytes, but also needs to read its two numeric ope
 |(Length of operand) * 2
 |-
 |OP_AND
-|Greater of the operand lengths + lesser of the two operand lengths
+|Sum of two operand lengths
 |-
 |OP_OR
-|(Lesser of the two operand lengths) x 2
+|(Lesser of the two operand lengths) * 2
 |-
 |OP_XOR
-|(Lesser of the two operand lengths) x 2
+|(Lesser of the two operand lengths) * 2
 |-
 |OP_UPSHIFT
 |Length of BITS + (Value of BITS) / 8 + Length of A (LENGTHCONV + ZEROING + COPYING).  If BITS % 8 != 0, add (Length of A) * 2.
@@ -527,9 +527,15 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 | OP_CHECKSEQUENCEVERIFY
 | Length of operand (LENGTHCONV)
 |-
-| OP_CHECKSIGADD (LENGTHCONV)
-| Length of number operand (*in addition to CHECKSIG cost)
+| OP_CHECKSIGADD
+| MAX(1, length of number operand) * 3
 |}
+
+====Rationale====
+
+OP_CHECKSIGADD does an OP_1ADD on success, so we use the same cost as
+that.  For simplicity, this is charged whether the OP_CHECKSIGADD
+succeeds or not.
 
 ===Arithmetic Operators===
 
@@ -541,13 +547,13 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 |Greater of two operand lengths * 3
 |-
 |OP_1ADD
-|Operand length * 3
+|MAX(1, operand length) * 3
 |-
 |OP_SUB
 |Greater of two operand lengths * 2
 |-
 |OP_1SUB
-|Operand length * 2
+|MAX(1, operand length) * 2
 |-
 |OP_2MUL
 |Operand length * 3
@@ -556,13 +562,13 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 |Operand length * 2
 |-
 |OP_MUL
-|Length of A + length of B + (length of A + 7) / 8 * (length of B) * 4
+|Length of A + length of B + (length of A + 7) / 8 * (length of B) * 4  (BEWARE OVERFLOW)
 |-
 |OP_DIV
-|Length of A * 9 + length of B * 2 + (length of A)^2 / 4
+|Length of A * 9 + length of B * 2 + (length of A)^2 / 4  (BEWARE OVERFLOW)
 |-
 |OP_MOD
-|Length of A * 9 + length of B * 2 + (length of A)^2 / 4
+|Length of A * 9 + length of B * 2 + (length of A)^2 / 4  (BEWARE OVERFLOW)
 |}
 
 ====Rationale====
@@ -617,7 +623,7 @@ See Appendix A for the cost calculations for OP_MUL, OP_DIV and OP_MOD.
 |Sum of two operand lengths
 |-
 |OP_WITHIN
-|3rd from stack top operand length x 2 + sum of other two operand lengths
+|3rd from stack top operand length * 2 + sum of other two operand lengths
 |}
 
 ===Hash Operators===
@@ -627,13 +633,13 @@ See Appendix A for the cost calculations for OP_MUL, OP_DIV and OP_MOD.
 ! Varops Budget Cost
 |-
 |OP_SHA256
-|(Length of the operand) x 10
+|(Length of the operand) * 10
 |-
 |OP_HASH160
-|(Length of the operand) x 10
+|(Length of the operand) * 10
 |-
 |OP_HASH256
-|(Length of the operand) x 10
+|(Length of the operand) * 10
 |}
 
 ====Rationale====
