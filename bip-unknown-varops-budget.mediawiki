@@ -1,0 +1,250 @@
+<pre>
+  BIP: ?
+  Layer: Consensus (soft fork)
+  Title: Varops Budget For Script Runtime Constraint
+  Author: Rusty Russell <rusty@rustcorp.com.au>
+  Comments-URI: TBA
+  Status: Draft
+  Type: Standards Track
+  Created: 2025-05-15
+  License: BSD-3-Clause
+</pre>
+
+==Introduction==
+
+===Abstract===
+
+This new BIP defines a "varops budget", which generalizes the "sigops budget" introduced in [[bip-0342.mediawiki|BIP342]] to non-signature operations.
+
+===Copyright===
+
+This document is licensed under the 3-clause BSD license.
+
+===Motivation===
+
+Since Bitcoin v0.3.1 (addressing CVE-2010-5137), Bitcoin's scripting capabilities have been significantly restricted to mitigate known vulnerabilities related to excessive computational time and memory usage.  These early safeguards were necessary to prevent denial-of-service attacks and ensure the stability and reliability of the Bitcoin network.
+
+However, as Bitcoin usage becomes more sophisticated, these limitations are becoming more salient.  New proposals often must explicitly address potential performance pitfalls by severely limiting their scope, introducing specialized caching strategies to mitigate execution costs, or using the existing sigops budget in ad-hoc ways to enforce dynamic execution limits.
+
+This BIP introduces a simple, systematic and explicit cost framework for evaluating script operations based on stack data interactions, using worst-case behavior as the limiting factor.  Even with these pessimistic assumptions, large classes of scripts can be shown to be within budget by static analysis.
+
+===A Model For Opcodes Dealing With Stack Data===
+
+Without an explicit and low limit on the size of stack operands, the bottleneck for script operations is based on the time taken to process the stack data it accesses (the exceptions being signature operations).  The cost model uses the length of the stack inputs (or occasionally, outputs).
+
+- We assume that the manipulation of the stack vector itself (e.g. OP_DROP) is negligible.
+- We assume that memory allocation and deallocation overhead is negligible.
+- We do not consider the cost of the script interpretation itself, which is necessarily limited by block size.
+- We assume an implementation uses simple linear arrays/vectors of contiguous memory.
+- We assume implementations use linear accesses to stack data (perhaps multiple times): random accesses would require an extension to the model.
+- We assume object size is limited to the entire transaction (4000000 bytes, worst-case).
+- Costs are based on the worst-case behavior of each opcode.
+
+The last two assumptions make a large difference in practice: normal usage on smalle, cache-hot objects is much faster than this model suggests.  But an implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a signficantly worse worst-case behaviour would be problematic.
+
+==Design==
+
+A per-transaction integer "varops budget" is determined by multiplying the total transaction weight by the fixed factor 5200.  (This suits our operation costs well, see below).
+
+Opcodes consume budget as they are executed, based on the length (not generally the value) of their parameters as detailed below.  A transaction which exceeds its budget fails to validate.
+
+===Derivation of Costs===
+
+The costs of opcodes were determined by benchmarking on a variety of platforms.
+
+As each block can contain 80,000 Schnorr signature checks, we used this as a reasonable upper bound for maximally slow block processing.
+
+Then we consider each opcode, with only two constraints:
+- The opcode could run no more than 4000000 times.
+- The opcode could consume a maximum varops budget of 5200 * 4000000 (i.e. the entire block).
+
+Ideally, on each platform we tested, the worst case time for each opcode would no worse than the Schnorr signature upper bound: i.e. the block would get no slower.  And while CHECKSIG can be done in parallel, it also involves hashing, which is not taken into account here (the worst-case being signficantly slower than the signature validations themselves).
+
+The signature cost is simply carried across from the existing limit: 50 bytes gives you one signature.  Since each transaction gets varops budget for the entire transaction (not just the current input's witness), and each input has at least 40 bytes (160 weight), this is actually slightly more generous than the sigops budget (which was 50 + witness weight), but still limits the entire block to 80,000 signatures.
+
+===Costs===
+
+We divided operations into four speed categores:
+
+1. Signature operations. 
+2. SHA256 operations.
+3. Fast operations: comparing bytes, comparing bytes against zero, copying bytes and zeroing bytes.  Empirically, these have been shown to be well-optimized.
+4. Everything else.
+
+Each class then has the following costs.
+
+1. Signature operations cost 260000 (5200 * 50) units each.
+2. Hashing costs 10 units per byte hashed.
+3. Fast operations cost 1 unit per byte.
+4. Other operations cost 2 units per byte.
+
+===Variable Opcode Budget===
+
+We use the following annotations to indicate the derivation for each opcode:
+
+- COMPARING: Comparing two objects: cost = 1 per byte compared.
+- COMPARINGZERO: Comparing an object against zeroes: cost = 1 per byte compared.
+- ZEROING: Zeroing out bytes: cost = 1 per byte zeroed
+- COPYING: Copying bytes: cost = 1 per byte copied.
+- LENGTHCONV: Converting an operand to a length value, including verifying that trailing bytes are zero: cost = 1 per byte copied.
+- SIGCHECK: cost = 260000
+- HASH: cost = 10 per byte hashed
+- All other operations: cost = 2 per byte.
+
+Note that COMPARINGZERO is a subset of COMPARING: an implementation must examine every byte of a stack element to determine if the value is 0.  This can be done efficiently using existing comparison techniques, e.g. check the first byte, then `memcmp(first, first+1, len-1)`.
+
+Note that LENGTHCONV is used where script interprets a value as a length.  Without explicit limits on number size, such (little-endian) values might have to be examined in their entirity to ensure any trailing bytes are zero, implying a COMPARINGZERO operation after the first few bytes.
+
+The top of stack is labelled A, with successive values B, C, etc.
+
+===Control And Simple Examination Opcodes===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_VERIFY
+|length(A) (COMPARINGZERO)
+|-
+|OP_NOT
+|length(A) (COMPARINGZERO)
+|-
+|OP_0NOTEQUAL
+|length(A) (COMPARINGZERO)
+|-
+|OP_EQUAL
+|If length(A) != length(B): 0, otherwise length(A) (COMPARING)
+|-
+|OP_EQUALVERIFY
+|If length(A) != length(B): 0, otherwise length(A) (COMPARING)
+|}
+
+====Rationale====
+
+OP_IF and OP_NOTIF in Tapscript require minimal values, so do not take variable length parameters.
+
+OP_EQUAL and OP_EQUALVERIFY don't have to examine any data (and the Bitcoin Core implementation does not) if the lengths are different.
+
+===Stack Manipulation===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_2DUP
+|length(A) + length(B) (COPYING)
+|-
+|OP_3DUP
+|length(A) + length(B) + length(C) (COPYING)
+|-
+|OP_2OVER
+|length(C) + length(D) (COPYING)
+|-
+|OP_IFDUP
+|length(A) * 2 (COMPARINGZERO + COPYING)
+|-
+|OP_DUP
+|length(A) (COPYING)
+|-
+|OP_OVER
+|length(B) (COPYING)
+|-
+|OP_PICK
+|length(A) + Length(A-th-from-top) (LENGTHCONV + COPYING)
+|-
+|OP_TUCK
+|length(B) (COPYING)
+|-
+|OP_ROLL
+|length(A) (LENGTHCONV)
+|-
+|}
+
+====Rationale====
+
+These operators copy a stack entry, write to another.  OP_IFDUP has the same worst-case cost as OP_IF + OP_DUP.
+
+===Comparison Operators===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_BOOLAND
+|length(A) + length(B) (COMPARINGZERO)
+|-
+|OP_BOOLOR
+|length(A) + length(B) (COMPARINGZERO)
+|-
+|OP_NUMEQUAL
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_NUMEQUALVERIFY
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_NUMNOTEQUAL
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_LESSTHAN
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_GREATERTHAN
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_LESSTHANOREQUAL
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_GREATERTHANOREQUAL
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_MIN
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_MAX
+|MAX(length(A), length(B)) (COMPARING + COMPARINGZERO)
+|-
+|OP_WITHIN
+|MAX(length(C), length(B)) + MAX(length(C), length(A)) (COMPARING + COMPARINGZERO)
+|}
+
+====Rationale====
+
+Numerical comparison in little-endian numbers involves a byte-by-byte comparison, then if one is longer, checking that the remainder is all zero bytes.
+
+===Hash Operators===
+
+{|
+! Opcode
+! Varops Budget Cost
+|-
+|OP_SHA256
+|(Length of the operand) * 10
+|-
+|OP_HASH160
+|(Length of the operand) * 10
+|-
+|OP_HASH256
+|(Length of the operand) * 10
+|}
+
+====Rationale====
+
+SHA256 has been well-optimized for current hardware, as it is already critical to Bitcoin's operation.  Additional once-off steps such as the final SHA round, and RIPEMD or a second SHA256 are not proportional to the input, so are not included in the cost model.
+
+A model for other hash operations (OP_SHA1, OP_RIPEMD160) is possible, but we have not done so.  They are not generally optimized, and if they were permitted on large inputs, this would have to be done.
+
+==Reference Implementation==
+
+Work in progress:
+
+	https://github.com/jmoik/bitcoin/tree/varops
+
+==Thanks==
+
+This BIP would not exist without the thoughful contributions of coders who considered all the facets carefully and thoroughly, and also my inspirational wife Alex and my kids who have been tirelessly supportive of my esoteric-seeming endeavors such as this!
+
+In alphabetical order:
+- Brandon Black (aka Reardencode)
+- Rijndael
+- Steven Roose
+- FIXME: your name here!
