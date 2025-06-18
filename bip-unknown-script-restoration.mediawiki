@@ -39,17 +39,17 @@ If a taproot leaf has a version of 0xc2, execution of opcodes is as defined belo
 
 Validation of a script fails if:
 - It exceeds the remaining varops budget for the transaction.
-- Any stack elements exceeds 4,000,000 bytes.
+- Any stack element exceeds 4,000,000 bytes.
 - The total size of all stack (and altstack) elements exceeds 8,000,000 bytes.
 - The number of stack elements (including altstack elements) exceeds 1000 (i.e. unchanged from previous versions).
 
 ===Rationale===
 
-There needs to be some limit on memory usage, to avoid a memory-based denial of service.  Putting the entire transaction on the stack is a foreseeable use case, hence using the block size (4MB) as a limit makes sense.  However, allowing 1000 4MB stack elements is a signficant increase in memory requirements, so a total limit of twice that many bytes (8MB) is introduced.  Many stack operations require making at least one copy, so this allows such use.
+There needs to be some limit on memory usage, to avoid a memory-based denial of service.  Putting the entire transaction on the stack is a foreseeable use case, hence using the block size (4MB) as a limit makes sense.  However, allowing 1000 4MB stack elements is a significant increase in memory requirements, so a total limit of twice that many bytes (8MB) is introduced.  Many stack operations require making at least one copy, so this allows such use.
 
 ===SUCCESS Opcodes===
 
-The following opcodes are renamed OP_SUCCESSx, and cause validatation to immediately succeed:
+The following opcodes are renamed OP_SUCCESSx, and cause validation to immediately succeed:
 
 * OP_1NEGATE = OP_SUCCESS79
 * OP_NEGATE = OP_SUCCESS143
@@ -85,7 +85,9 @@ In addition, the success requirement in BIP-342 is modified to require a non-zer
 
 Fifteen opcodes which were removed in v0.3.1 are re-enabled in v2 Tapscript.
 
-If there are less than the required number of stack elements, these opcodes fail.  Equivalently, a requirement to pop off the stack which cannot be satisfied causes the opcode to fail.
+If there are less than the required number of stack elements, these opcodes fail validation.  Equivalently, a requirement to pop off the stack which cannot be satisfied causes the opcode to fail validation.
+
+See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the annotations in the varops cost field.
 
 ====Splice Opcodes====
 
@@ -141,6 +143,8 @@ If there are less than the required number of stack elements, these opcodes fail
 
 =====Rationale=====
 
+OP_CAT may require a reallocation of A (hence, COPYING A) before appending B.
+
 OP_SUBSTR may have to copy LEN bytes, but also needs to read its two numeric operands.  LEN is limited to the length of the operand minus BEGIN.
 
 OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_RIGHT must copy the number of remaining bytes, which depends on the operand length.
@@ -157,7 +161,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_INVERT
 |131
 |1
-|length(A) * 2
+|length(A) * 2 (OTHER)
 |
 # Pop A off the stack.
 # For each byte in A, replace it with that byte bitwise XOR 0xFF (i.e. invert the bits)
@@ -166,7 +170,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_AND
 |132
 |2
-|length(A) + length(B) (anding bytes, ZEROING)
+|length(A) + length(B) (OTHER, ZEROING)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -177,7 +181,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_OR
 |133
 |2
-|MIN(length(A), length(B)) * 2
+|MIN(length(A), length(B)) * 2 (OTHER)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -188,7 +192,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_XOR
 |134
 |2
-|MIN(length(A), length(B)) * 2
+|MIN(length(A), length(B)) * 2 (OTHER)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -199,11 +203,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 
 =====Rationale=====
 
-OP_AND, OP_OR and OP_XOR are assumed to fold the results into the longer of the two operands.  This is a normal operation (i.e. cost is 2 per byte), but OP_AND needs to do this until one operand is exhausted, and then zero the rest (cost 1 per byte).   OP_OR and OP_XOR can stop at as soon as the shorter operand is exhausted.
-
-DOWNSHIFT needs to read the value of the second operand BITS.  It then needs to move the remainder of A (the part after offset BITS/8 bytes).
-
-UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying A and zeroing out remaining words).  If not moving an exact number of bytes (BITS % 8 != 0), another pass is needed to perform the bitshift.
+OP_AND, OP_OR and OP_XOR are assumed to fold the results into the longer of the two operands.  This is an OTHER operation (i.e. cost is 2 per byte), but OP_AND needs to do this until one operand is exhausted, and then zero the rest (ZEROING, cost 1 per byte).   OP_OR and OP_XOR can stop at as soon as the shorter operand is exhausted.
 
 ====Bitshift Opcodes====
 
@@ -219,7 +219,7 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 |OP_UPSHIFT
 |152
 |2
-|length(BITS) + (Value of BITS) / 8 + length(A) (LENGTHCONV + ZEROING + COPYING).  If BITS % 8 != 0, add length(A) * 2.
+|length(BITS) + (Value of BITS) / 8 + length(A) (LENGTHCONV + ZEROING + COPYING).  If BITS % 8 != 0, add length(A) * 2 (OTHER)
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
@@ -231,7 +231,7 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 |OP_DOWNSHIFT
 |153
 |2
-|length(BITS) + MAX((length(A) - (Value of BITS) / 8), 0) * 2
+|length(BITS) + MAX((length(A) - (Value of BITS) / 8), 0) * 2 (LENGTHCONV + OTHER)
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
@@ -242,6 +242,10 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 |}
 
 =====Rationale=====
+
+DOWNSHIFT needs to read the value of the second operand BITS.  It then needs to move the remainder of A (the part after offset BITS/8 bytes).
+
+UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying A and zeroing out remaining words).  If not moving an exact number of bytes (BITS % 8 != 0), another pass is needed to perform the bitshift.
 
 OP_UPSHIFT can produce huge results, and so must be checked for limits prior to evaluation.  It is also carefully defined to avoid reallocating twice (reallocating to prepend bytes, then again to append a single byte) which has the practical advantage of being about to share the same downward bitshift routine as OP_DOWNSHIFT.
 
@@ -257,7 +261,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_2MUL
 |141
 |1
-|length(A) * 3
+|length(A) * 3 (OTHER + COPYING)
 |
 # Pop A off the stack.
 # Shift each byte in A 1 bit to the left (increasing values, equivalent to C's << operator), tracking the last non-zero value.
@@ -268,7 +272,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_2DIV
 |142
 |1
-|length(A) * 2
+|length(A) * 2 (OTHER)
 |
 # Pop A off the stack.
 # Shift each byte 1 bit to the right (decreasing values, equivalent to C's >> operator), tracking the last non-zero value.
@@ -325,7 +329,7 @@ OP_RIPEMD160 and OP_SHA1 are now defined to FAIL validation if their operands ex
 
 ====Rationale====
 
-There seems little reason to allow large hashing with SHA1 and RIPEMD, and they are not as optimized as SHA256, so we simply restrict their usage.
+There seems little reason to allow large hashing with SHA1 and RIPEMD, and they are not as optimized as SHA256, so we restrict their usage to the older byte limit.
 
 ===Extended Opcodes===
 
@@ -341,7 +345,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_ADD
 |147
 |2
-|MAX(length(A), length(B)) * 3
+|MAX(length(A), length(B)) * 3 (OTHER + COPYING)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -355,7 +359,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_1ADD
 |139
 |1
-|MAX(1, length(A)) * 3
+|MAX(1, length(A)) * 3 (OTHER + COPYING)
 |
 # Pop A off the stack.
 # Let B = 1, and continue as OP_ADD.
@@ -363,18 +367,18 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_SUB
 |148
 |2
-|MAX(length(A), length(B)) * 2
+|MAX(length(A), length(B)) * 2  (OTHER)
 |
 # Pop B off the stack.
 # Pop A off the stack.
 # For each byte in B, subtract it and previous underflow from the equivalent byte in A, remembering next underflow.
-# If there was final overflow, fail.
+# If there was final overflow, fail validation.
 # Remember last non-zero byte written into A, and truncate A after that point.
 |-
 |OP_1SUB
 |140	
 |1
-|MAX(1, length(A)) * 2
+|MAX(1, length(A)) * 2 (OTHER)
 |
 # Pop A off the stack.
 # Let B = 1, and continue as OP_SUB.
@@ -466,8 +470,8 @@ Multiplication and division require multiple passes over the operands, meaning a
 For multiplication, the steps break down like so:
 1. Allocate and zero the result: cost = length(A) + length(B) (ZEROING)
 2. For each word in A:
-  * Multiply by each word in B, into a scratch vector: cost = 2 * length(B)
-  * Sum scratch vector at the word offset into the result: cost = 2 * length(B)
+  * Multiply by each word in B, into a scratch vector: cost = 2 * length(B) (OTHER)
+  * Sum scratch vector at the word offset into the result: cost = 2 * length(B) (OTHER)
 
 Note: we do not assume Karatsuba, Tom-Cooke or other optimizations.
 
@@ -487,19 +491,19 @@ For division, the steps break down like so:
 
 4. Compare: cost = length(A) * 2
 
-4. Subtract: cost = length(A) * 2
+5. Subtract: cost = length(A) * 2
 
-5. for (length(A) - NormalizedLength(B)) in words:
+6. for (length(A) - NormalizedLength(B)) in words:
    1. Multiply word by B -> scratch: cost = NormalizedLength(B) * 2
    2. Subtract scratch from A: cost = length(A) * 2
    3. Add B into A: cost = length(A) * 2
    4. Shrink A by 1 word.
 
-6. OP_MOD: shift A down, trim trailing zeros: cost = length(A) * 2
+7. OP_MOD: shift A down, trim trailing zeros: cost = length(A) * 2
 
-7. OP_DIV: trim trailing zeros: cost = length(A) * 2
+8. OP_DIV: trim trailing zeros: cost = length(A) * 2
 
-Note that the loop at step 5 shrinks A every time, so the *average* cost of each iteration is NormalizedLength(B) + length(A) * 2.  The cost of step 5 is:
+Note that the loop at step 6 shrinks A every time, so the *average* cost of each iteration is NormalizedLength(B) + length(A) * 2.  The cost of step 6 is:
 
 	(length(A) - NormalizedLength(B)) / 8 * (NormalizedLength(B) + length(A) * 2)
 

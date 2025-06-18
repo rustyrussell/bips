@@ -16,6 +16,8 @@
 
 This new BIP defines a "varops budget", which generalizes the "sigops budget" introduced in [[bip-0342.mediawiki|BIP342]] to non-signature operations.
 
+This BIP is a useful framework for other BIPs to draw upon, and provides opcode examples which are always less restrictive than current rules.
+
 ===Copyright===
 
 This document is licensed under the 3-clause BSD license.
@@ -35,16 +37,16 @@ Without an explicit and low limit on the size of stack operands, the bottleneck 
 - We assume that the manipulation of the stack vector itself (e.g. OP_DROP) is negligible.
 - We assume that memory allocation and deallocation overhead is negligible.
 - We do not consider the cost of the script interpretation itself, which is necessarily limited by block size.
-- We assume an implementation uses simple linear arrays/vectors of contiguous memory.
+- We assume implementations use simple linear arrays/vectors of contiguous memory.
 - We assume implementations use linear accesses to stack data (perhaps multiple times): random accesses would require an extension to the model.
 - We assume object size is limited to the entire transaction (4000000 bytes, worst-case).
 - Costs are based on the worst-case behavior of each opcode.
 
-The last two assumptions make a large difference in practice: normal usage on smalle, cache-hot objects is much faster than this model suggests.  But an implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a signficantly worse worst-case behaviour would be problematic.
+The last two assumptions make a large difference in practice: normal usage on small, cache-hot objects is much faster than this model suggests.  But an implementation which is more efficient than the versions modeled does not introduce any problems (though a future soft-fork version may want to reflect this in reduced costings): only an implementation with a significantly worse worst-case behavior would be problematic.
 
 ==Design==
 
-A per-transaction integer "varops budget" is determined by multiplying the total transaction weight by the fixed factor 5200.  (This suits our operation costs well, see below).
+A per-transaction integer "varops budget" is determined by multiplying the total transaction weight by the fixed factor 5200.  (This is chosen to make our operation costs all integer values).
 
 Opcodes consume budget as they are executed, based on the length (not generally the value) of their parameters as detailed below.  A transaction which exceeds its budget fails to validate.
 
@@ -58,13 +60,13 @@ Then we consider each opcode, with only two constraints:
 - The opcode could run no more than 4000000 times.
 - The opcode could consume a maximum varops budget of 5200 * 4000000 (i.e. the entire block).
 
-Ideally, on each platform we tested, the worst case time for each opcode would no worse than the Schnorr signature upper bound: i.e. the block would get no slower.  And while CHECKSIG can be done in parallel, it also involves hashing, which is not taken into account here (the worst-case being signficantly slower than the signature validations themselves).
+Ideally, on each platform we tested, the worst case time for each opcode would no worse than the Schnorr signature upper bound: i.e. the block would get no slower.  And while CHECKSIG can be done in parallel, it also involves hashing, which is not taken into account here (the worst-case being significantly slower than the signature validations themselves).
 
 The signature cost is simply carried across from the existing limit: 50 bytes gives you one signature.  Since each transaction gets varops budget for the entire transaction (not just the current input's witness), and each input has at least 40 bytes (160 weight), this is actually slightly more generous than the sigops budget (which was 50 + witness weight), but still limits the entire block to 80,000 signatures.
 
-===Costs===
+===Cost Categories===
 
-We divided operations into four speed categores:
+We divided operations into four speed categories:
 
 1. Signature operations. 
 2. SHA256 operations.
@@ -75,8 +77,8 @@ Each class then has the following costs.
 
 1. Signature operations cost 260000 (5200 * 50) units each.
 2. Hashing costs 10 units per byte hashed.
-3. Fast operations cost 1 unit per byte.
-4. Other operations cost 2 units per byte.
+3. Fast operations cost 1 unit per byte output.
+4. Other operations cost 2 units per byte output.
 
 ===Variable Opcode Budget===
 
@@ -89,15 +91,19 @@ We use the following annotations to indicate the derivation for each opcode:
 - LENGTHCONV: Converting an operand to a length value, including verifying that trailing bytes are zero: cost = 1 per byte copied.
 - SIGCHECK: cost = 260000
 - HASH: cost = 10 per byte hashed
-- All other operations: cost = 2 per byte.
+- OTHER operations: cost = 2 per byte.
 
 Note that COMPARINGZERO is a subset of COMPARING: an implementation must examine every byte of a stack element to determine if the value is 0.  This can be done efficiently using existing comparison techniques, e.g. check the first byte, then `memcmp(first, first+1, len-1)`.
 
-Note that LENGTHCONV is used where script interprets a value as a length.  Without explicit limits on number size, such (little-endian) values might have to be examined in their entirity to ensure any trailing bytes are zero, implying a COMPARINGZERO operation after the first few bytes.
+Note that LENGTHCONV is used where script interprets a value as a length.  Without explicit limits on number size, such (little-endian) values might have to be examined in their entirety to ensure any trailing bytes are zero, implying a COMPARINGZERO operation after the first few bytes.
 
-The top of stack is labelled A, with successive values B, C, etc.
+The top of stack is labeled A, with successive values B, C, etc.
 
-===Control And Simple Examination Opcodes===
+==Example Opcodes==
+
+The following opcodes demonstrate the approach, with an analysis of how the costs apply:
+
+===Example: Control And Simple Examination Opcodes===
 
 {|
 ! Opcode
@@ -125,7 +131,7 @@ OP_IF and OP_NOTIF in Tapscript require minimal values, so do not take variable 
 
 OP_EQUAL and OP_EQUALVERIFY don't have to examine any data (and the Bitcoin Core implementation does not) if the lengths are different.
 
-===Stack Manipulation===
+===Example: Stack Manipulation===
 
 {|
 ! Opcode
@@ -164,7 +170,7 @@ OP_EQUAL and OP_EQUALVERIFY don't have to examine any data (and the Bitcoin Core
 
 These operators copy a stack entry, write to another.  OP_IFDUP has the same worst-case cost as OP_IF + OP_DUP.
 
-===Comparison Operators===
+===Example: Comparison Operators===
 
 {|
 ! Opcode
@@ -211,20 +217,20 @@ These operators copy a stack entry, write to another.  OP_IFDUP has the same wor
 
 Numerical comparison in little-endian numbers involves a byte-by-byte comparison, then if one is longer, checking that the remainder is all zero bytes.
 
-===Hash Operators===
+===Example: Hash Operators===
 
 {|
 ! Opcode
 ! Varops Budget Cost
 |-
 |OP_SHA256
-|(Length of the operand) * 10
+|(Length of the operand) * 10 (HASH)
 |-
 |OP_HASH160
-|(Length of the operand) * 10
+|(Length of the operand) * 10 (HASH)
 |-
 |OP_HASH256
-|(Length of the operand) * 10
+|(Length of the operand) * 10 (HASH)
 |}
 
 ====Rationale====
@@ -241,7 +247,7 @@ Work in progress:
 
 ==Thanks==
 
-This BIP would not exist without the thoughful contributions of coders who considered all the facets carefully and thoroughly, and also my inspirational wife Alex and my kids who have been tirelessly supportive of my esoteric-seeming endeavors such as this!
+This BIP would not exist without the thoughtful contributions of coders who considered all the facets carefully and thoroughly, and also my inspirational wife Alex and my kids who have been tirelessly supportive of my esoteric-seeming endeavors such as this!
 
 In alphabetical order:
 - Brandon Black (aka Reardencode)
