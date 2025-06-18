@@ -1,0 +1,243 @@
+<pre>
+  BIP: ?
+  Layer: Consensus (soft fork)
+  Title: OP_TX
+  Author: Rusty Russell <rusty@rustcorp.com.au>
+  Comments-URI: TBA
+  Status: Draft
+  Type: Standards Track
+  Created: 2025-06-16
+  License: BSD-3-Clause
+</pre>
+
+==Introduction==
+
+===Abstract===
+
+This BIP introduces a new opcode (OP_TX) for tapscript v2, which allows for convenient and explicit introspection of the current transaction.  It redefines the OP_SUCCESS189 tapscript opcode (0xbd) as OP_TX.
+
+===Copyright===
+
+This document is licensed under the 3-clause BSD license.
+
+===Motivation===
+
+The original Bitcoin design was to avoid reliance on trusted third parties, and the scripting system was a way of ensuring this: that the network itself would enforce the spending conditions for an output.  This aim is undermined if users cannot specify, with all possible precision and power, the conditions under which their coins can be spent.
+
+[[bip-unknown-script-restoration.mediawiki|BIP-scriptrestore]] restores full programmability to Bitcoin's scripting system, but does not make it convenient.  The main missing piece is the ability to directly query the transaction attempting to spend an output, beyond merely checking that it is signed by a given set of keys.  Many proposals to use this functionality have emerged, including new signature modes, spending restrictions even in case of leaked key material, and more complicated multiparty protocols.
+
+This opcode allows directly extracting each piece of the current transaction's contents (and some of its context) onto the stack.  This allows arbitrary arithmetic on values and examination of scripts, but an opcode which only allowed extraction of a single type of value at a time would be inefficient in the very common case where specific fields of the transaction are required to be specific exact values.  So we explicitly support extraction of multiple values into a single, concatenated stack element, ready for hashing and comparison.
+
+==OP_TX==
+
+OP_TX operates as follows:
+
+- If the stack is empty, fail validation.
+- Pop the ''selection_vector'' off the stack.
+- If ''selection_vector'' contains bits not defined in the table below:
+  - Immediately succeed script validation.
+- Extract the two input selector bits from ''selection_vector'':
+  - TXSELECT_INPUTSELECT_CURRENT: ''first_input'' = current input, ''num_ inputs'' = 1
+  - TXSELECT_INPUTSELECT_ALL: ''first_input'' = 0, ''num_inputs'' = number of inputs
+  - TXSELECT_INPUTSELECT_SINGLE:
+     - if the stack is empty, fail validation.
+     - otherwise pop ''first_input'' off the stack.  ''num_inputs'' = 1.
+     - if the input numbered ''first_input'' does not exist, fail validation.
+  - TXSELECT_INPUTSELECT_RANGE (pop start, number from stack)
+     - if the stack has less than 2 elements, fail validation.
+     - otherwise pop ''num_inputs'' then ''first_input'' off the stack.
+- Extract the two output selector bits from ''selection_vector'':
+  - TXSELECT_OUTPUTSELECT_CURRENT: ''first_output'' = current input, ''num_outputs'' = 1
+  - TXSELECT_OUTPUTSELECT_ALL: ''first_output'' = 0, ''num_outputs'' = number of outputs
+  - TXSELECT_OUTPUTSELECT_SINGLE:
+     - if the stack is empty, fail validation.
+     - otherwise pop ''first_output'' off the stack.  ''num_outputs'' = 1.
+     - if the output numbered ''first_output'' does not exist, fail validation.
+  - TXSELECT_OUTPUTSELECT_RANGE (pop start, number from stack)
+     - if the stack has less than 2 elements, fail validation.
+     - otherwise pop ''num_outputs'' then ''first_output'' off the stack.
+- If TXSELECT_COLLATE is set in ''selection_vector'':
+  - push an empty element onto the stack.
+  - "output" means "concatenate to the top stack element".
+  - "varint or int" means output the value as a CompactSize
+  - "variable size object" means the length as a CompactSize, then the object
+- Otherwise:  
+  - "output" means "push a new element onto the stack"
+  - "varint or int" means output the value as a minimally-encoded little-endian integer
+  - "variable size object" means output the object (without length prepended)
+
+Examine bits in ''selection_vector'':
+- If TXSELECT_CURR_INPUT_NUMBER is set:
+  - output the current 0-based input number as varint or int.
+- If TXSELECT_LOCKTIME is set:
+  - output the nLocktime field (32 bits)
+- For each existing output in the range ''first_output'' to ''first_output'' + ''num_inputs'':
+  - If TXSELECT_OUTPUT_SCRIPT is set:
+    - output this output's scriptPubkey as a variable size object
+  - If TXSELECT_OUTPUT_AMOUNT is set:
+    - output this output's amount (64 bits)
+- If TXSELECT_NUM_OUTPUTS is set:
+  - output the number of outputs as varint or int
+- For each existing input ''i'' in the range ''first_input'' to ''first_input'' + ''num_outputs'':
+  - For each witness stack element (including any annex) in input ''i'':
+    - If TXSELECT_INPUT_WITNESS is set:
+      - output the witness stack element as a variable size object
+  - If TXSELECT_INPUT_NUM_WITNESSES is set:
+    - output input ''i''s number of witness elements (including any annex) as varint or int.
+  - If TXSELECT_INPUT_SCRIPTPUBKEY is set:
+    - output input ''i''s scriptPubkey as a variable size object
+  - If TXSELECT_INPUT_AMOUNT is set:
+    - output input ''i''s input amount (64 bits)
+  - If TXSELECT_INPUT_SEQUENCE is set:
+    - output input ''i''s nSequence (32 bits)
+  - If TXSELECT_INPUT_SCRIPT is set:
+    - output input ''i''s script as a variable size object
+  - If TXSELECT_INPUT_OUTPOINT_INDEX is set:
+    - output input ''i''s outpoint index (32 bits)
+  - If TXSELECT_INPUT_OUTPOINT_HASH is set:
+    - output input ''i''s outpoint hash (32 bytes)
+- If TXSELECT_NUM_INPUTS is set:
+  - output the number of inputs as varint or int
+- If TXSELECT_VERSION is set:
+  - output the nVersion (32 bits)
+
+- The varops cost for each operation is 2 units per byte output.
+- As always, validation fails if:
+  - the top stack element exceeds 4,000,000 bytes, or
+  - the total bytes on the stack exceeds 8,000,000 bytes, or
+  - the total number of stack entries exceeds 1000, or
+  - the varops cost exceeds the remaining varops budget.
+
+===Rationale===
+
+The runtime success semantics for unknown bits in ''section_vector'' improves upgradability, by allowing other bits to be specified in future in a backwards-compatible manner.  Unfortunately, unlike OP_SUCCESS semantics defined in [[bip-0342.mediawiki|BIP342]], this cannot generally be evaluated before script execution begins, because it's possible (and occasionally useful) to allow ''section_vector'' to be altered at runtime.  Where this is done, it needs to be constrained to a certain subset anyway (such as setting TXSELECT_COLLATE), so preventing unknown bits is not a signficant additional burden on the script.
+
+The use of four selection values for inputs and outputs recognises the common cases of either all, or only the current input (and, SIGHASH_SINGLE-style, the matching output) while allowing more flexibility for the general case of requesting specific inputs or outputs.
+
+The TXSELECT_COLLATE option is an optimization for concatenation; the representation of numbers changes from arithemetic-covenient to linearization-convenient, and size prepended to variable length objects, so that there is no possible ambiguity over the results.
+
+The order of field output is txid order, with fields which do not appear in the txid appended appropriately.  Without a strong demonstrated reason for a different ordering in practice, using established ordering should be preferred.
+
+The varops cost is slightly higher than simply stack copying, reflecting a conservative view that some fiels are not as immediately available as stack elements.  It is still cheap enough to allow accessing the entire transaction many times over: the weight of the OP_TX opcode itself provides enough budget to access 2600 bytes.
+
+===Values For TXID-Relevant Selectors===
+
+These selectors enumerate parts of the transaction which are hashed into the txid:
+
+{|
+! Selector Name
+! Selector Value
+|-
+|TXSELECT_COLLATE
+|1
+|-
+|TXSELECT_VERSION
+|2
+|-
+|TXSELECT_NUM_INPUTS
+|4
+|-
+|TXSELECT_INPUT_OUTPOINT_HASH
+|8
+|-
+|TXSELECT_INPUT_OUTPOINT_INDEX
+|16
+|-
+|TXSELECT_INPUT_SCRIPT
+|32
+|-
+|TXSELECT_INPUT_SEQUENCE
+|64
+|-
+|TXSELECT_NUM_OUTPUTS
+|128
+|-
+|TXSELECT_OUTPUT_AMOUNT
+|256
+|-
+|TXSELECT_OUTPUT_SCRIPT
+|512
+|-
+|TXSELECT_OUTPUT_LOCKTIME
+|1024
+|}
+
+===Values For Input Selector and Output Selector Bits===
+
+The input selectors, controlling which inputs are enumerated, are bits 11 and 12:
+
+{|
+! Selector Name
+! Selector Value
+|-
+|TXSELECT_INPUTSELECT_ALL
+|0
+|-
+|TXSELECT_INPUTSELECT_CURRENT
+|2048
+|-
+|TXSELECT_INPUTSELECT_SINGLE
+|4096
+|-
+|TXSELECT_INPUTSELECT_RANGE
+|6144
+|}
+
+The output selectors, controlling which outputs are enumerated, are bits 13 and 14:
+
+{|
+! Selector Name
+! Selector Value
+|-
+|TXSELECT_OUTPUTSELECT_ALL
+|0
+|-
+|TXSELECT_OUTPUTSELECT_CURRENT
+|8192
+|-
+|TXSELECT_OUTPUTSELECT_SINGLE
+|16386
+|-
+|TXSELECT_OUTPUTSELECT_RANGE
+|24576
+|}
+
+===Values For Input Metadata Selection===
+
+These select additional data about the input which is not committed in the txid, as well as the current input number:
+
+{|
+! Selector Name
+! Selector Value
+|-
+|TXSELECT_CURR_INPUT_NUMBER
+|32768
+|-
+|TXSELECT_INPUT_AMOUNT
+|65536
+|-
+|TXSELECT_INPUT_SCRIPTPUBKEY
+|131072
+|-
+|TXSELECT_INPUT_NUM_WITNESSES
+|262144
+|-
+|TXSELECT_INPUT_WITNESS
+|524288
+|}
+
+==Reference Implementation==
+
+None as yet.
+
+==Thanks==
+
+I stand here on the shoulder of giants, including Russell O'Connor's original OP_TXHASH proposal and Steven Roose's subsequent elaboration of that work.  I also credit Jeremy Rubin for his tireless work exploring the uses of covenants and his OP_CHECKTEMPLATEVERIFY proposal.
+
+While I ultimately found those proposal unsatisfying, it was their daunting intellectual prowess which forced me to slowly develop the groundwork for a proposal to meet the high standards they have set.
+
+==TODO==
+
+The ordering of bits in the ''selection_vector'' is unoptimized: if a mask only uses the first four bits it can be put on the stack in a single opcode byte, two opcode bytes for eight bits, three for sixteen.  This is ripe for consideration by greater minds (aka "bikeshedding").
+
+In particular, an all-zero mask for OP_TX makes no sense, so it could be defined to mean some pre-determined mask: for example, the OP_CHECKTEMPLATEVERIFY proposal commits to the data in (though not the form of) COLLATE|VERSION|NUM_INPUTS|NUM_OUTPUTS|OUTPUT_AMOUNT|OUTPUT_SCRIPT|OUTPUT_LOCKTIME|CURR_INPUT_NUMBER.
