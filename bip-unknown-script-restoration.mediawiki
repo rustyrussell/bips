@@ -282,7 +282,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_MUL
 |149
 |2
-|length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 4  (BEWARE OVERFLOW)
+|length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 6  (BEWARE OVERFLOW)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -295,7 +295,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_DIV
 |150
 |2
-|length(A) * 9 + length(B) * 2 + length(A)^2 / 4  (BEWARE OVERFLOW)
+|length(A) * 9 + length(B) * 2 + length(A)^2 / 3  (BEWARE OVERFLOW)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -308,7 +308,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_MOD
 |151
 |2
-|length(A) * 9 + length(B) * 2 + length(A)^2 / 4  (BEWARE OVERFLOW)
+|length(A) * 9 + length(B) * 2 + length(A)^2 / 3  (BEWARE OVERFLOW)
 |
 # Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
 # If B is empty or all zeroes, fail.
@@ -345,7 +345,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_ADD
 |147
 |2
-|MAX(length(A), length(B)) * 3 (OTHER + COPYING)
+|MAX(length(A), length(B)) * 4 (ARITH + COPYING)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -359,7 +359,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_1ADD
 |139
 |1
-|MAX(1, length(A)) * 3 (OTHER + COPYING)
+|MAX(1, length(A)) * 4 (ARITH + COPYING)
 |
 # Pop A off the stack.
 # Let B = 1, and continue as OP_ADD.
@@ -367,7 +367,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_SUB
 |148
 |2
-|MAX(length(A), length(B)) * 2  (OTHER)
+|MAX(length(A), length(B)) * 3 (ARITH)
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -378,7 +378,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_1SUB
 |140	
 |1
-|MAX(1, length(A)) * 2 (OTHER)
+|MAX(1, length(A)) * 3 (ARITH)
 |
 # Pop A off the stack.
 # Let B = 1, and continue as OP_SUB.
@@ -386,7 +386,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 
 ====Rationale====
 
-Note the basic cost for ADD is twice the maximum operand length, but then considers the case where a reallocation and copy needs to occur to append the final carry byte (COPYING, which costs 1 unit per byte).
+Note the basic cost for ADD is three times the maximum operand length, but then considers the case where a reallocation and copy needs to occur to append the final carry byte (COPYING, which costs 1 unit per byte).
 
 Subtraction is cheaper because underflow does not occur: that is a validation failure, as mathematicians agree the result would not be natural.
 
@@ -405,7 +405,7 @@ The following opcodes have costs below:
 | Length of operand (LENGTHCONV)
 |-
 | OP_CHECKSIGADD
-| MAX(1, length(number operand)) * 3 + 26000 (SIGCHECK)
+| MAX(1, length(number operand)) * 4 + 26000 (ARITH + COPYING + SIGCHECK)
 |-
 | OP_CHECKSIG
 | 26000 (SIGCHECK)
@@ -470,12 +470,12 @@ Multiplication and division require multiple passes over the operands, meaning a
 For multiplication, the steps break down like so:
 1. Allocate and zero the result: cost = length(A) + length(B) (ZEROING)
 2. For each word in A:
-  * Multiply by each word in B, into a scratch vector: cost = 2 * length(B) (OTHER)
-  * Sum scratch vector at the word offset into the result: cost = 2 * length(B) (OTHER)
+  * Multiply by each word in B, into a scratch vector: cost = 3 * length(B) (ARITH)
+  * Sum scratch vector at the word offset into the result: cost = 3 * length(B) (ARITH)
 
 Note: we do not assume Karatsuba, Tom-Cooke or other optimizations.
 
-This results in a cost of: length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 4.
+This results in a cost of: length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 6.
 
 This is slight asymmetric: in practice an implementation usually finds that CPU pipelining means choosing B as the larger operand is optimal.
 
@@ -489,24 +489,24 @@ For division, the steps break down like so:
 
 3. If B is longer, the answer is 0 already.  So assume A is longer from now on (or equal length).
 
-4. Compare: cost = length(A) * 2
+4. Compare: cost = length(A) (COMPARING)
 
-5. Subtract: cost = length(A) * 2
+5. Subtract: cost = length(A) * 3 (ARITH)
 
 6. for (length(A) - NormalizedLength(B)) in words:
-   1. Multiply word by B -> scratch: cost = NormalizedLength(B) * 2
-   2. Subtract scratch from A: cost = length(A) * 2
-   3. Add B into A: cost = length(A) * 2
+   1. Multiply word by B -> scratch: cost = NormalizedLength(B) * 3 (ARITH)
+   2. Subtract scratch from A: cost = length(A) * 3 (ARITH)
+   3. Add B into A (no overflow): cost = length(A) * 3 (ARITH)
    4. Shrink A by 1 word.
 
 7. OP_MOD: shift A down, trim trailing zeros: cost = length(A) * 2
 
 8. OP_DIV: trim trailing zeros: cost = length(A) * 2
 
-Note that the loop at step 6 shrinks A every time, so the *average* cost of each iteration is NormalizedLength(B) + length(A) * 2.  The cost of step 6 is:
+Note that the loop at step 6 shrinks A every time, so the *average* cost of each iteration is (NormalizedLength(B) * 3 + length(A) * 6) / 2.  The cost of step 6 is:
 
-	(length(A) - NormalizedLength(B)) / 8 * (NormalizedLength(B) + length(A) * 2)
+	(length(A) - NormalizedLength(B)) / 8 * (NormalizedLength(B) * 3 + length(A) * 6) / 2
 
-The worst case here if is NormalizedLength(B) is 0: length(A) * length(A) / 4.
+The worst case here if is NormalizedLength(B) is 0: length(A) * length(A) / 3.
 
-The cost for the all the steps in either case is: length(A) * 9 + length(B) * 2 + length(A) * length(A) / 4.
+The cost for the all the steps in either case is: length(A) * 9 + length(B) * 2 + length(A) * length(A) / 3.
