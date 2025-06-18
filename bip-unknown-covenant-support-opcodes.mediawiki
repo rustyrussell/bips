@@ -1,0 +1,70 @@
+<pre>
+  BIP: ?
+  Layer: Consensus (soft fork)
+  Title: New Opcodes for Taproot v2
+  Author: Rusty Russell <rusty@rustcorp.com.au>
+  Comments-URI: TBA
+  Status: Draft
+  Type: Standards Track
+  Created: 2025-06-17
+  License: BSD-3-Clause
+</pre>
+
+==Introduction==
+
+===Abstract===
+
+This BIP proposes several new opcodes for tapscript v2, to take full advantage of scripting enhancements and covenant facilities offered by OP_TX.
+
+===Copyright===
+
+This document is licensed under the 3-clause BSD license.
+
+===Motivation===
+
+Restoration of opcodes and introspection make script much more useful, and thus increase the range of things we may want to do.  This, in turn, highlights some existing shortfalls in Script, both in the way it handles multiple stack objects, and when attempting to reproduce modern Taproot constructions.
+
+This list of opcodes is not exhaustive, but each offers some significant capability which was previously impossible or extremely awkward in script.
+
+A key motivation for these changes lies in future possible BIPs: once script is well-rounded (if not "complete"), most proposals will be optimizations, whose benifits can be quantitatively assessed based on actual usage.
+
+==New Opcodes==
+
+;OP_CHECKSIGFROMSTACK
+: A subset of OP_CHECKSIG.  With OP_TX and OP_SHA256 we have the part of CHECKSIG which obtains and hashes parts of the transaction.  What remains is being able to check a signature against a hash on the stack.  OP_CHECKSIGFROMSTACK provides this.  The varops cost is the same as a CHECKSIG operation.
+
+;OP_SEGMENT
+: This opcode remains an NOP.  But it makes script parts ''composable'': currently you cannot append two scripts, because OP_SUCCESS causes immediate success without script evaluation.  OP_SEGMENT changes this rule to ''segment'' the script into parts, which are evaluated in order.  If a segment does not have OP_SUCCESS, that part of the script is evaluated.  This allows a transaction to ensure some condition is met, but also allow arbitrary script conditions thereafter.
+
+;OP_BYTEREV
+: This is the minimium requirement for constructing ordered Merkle trees as specified in Taproot.  Unfortunately, hashes need to be compared left to right, where Script opcodes operate right to left (as per little endian numbers).  Alternatives would be a direct OP_REVCMP opcode, or even a dedicated Merkle opcode, but byte reversal can be generally useful.
+
+;OP_ECPOINTADD
+: Also required for constructing Taproot spends.  The varops cost is the same as a CHECKSIG operation.
+
+;OP_INTERNALKEY
+: An optimization: an unspendable keypath for Taproot simply wastes space.  If this is not changed in a future version, OP_INTERNALKEY at least allows the script to use this data for something else.  An alternative would be another OP_TX ''selection_vector'' bit.  See [[bip-0349.mediawiki|BIP-349]].
+
+;OP_MULTI
+: Several opcodes would benefit from a variant which takes the number of operands off the stack.  Instead of introducing many more opcodes, we propose OP_MULTI as a prefix to the following opcode which pops a number off the stack, and makes the next opcode operate on more than its usual number of operands: OP_CAT, OP_ADD, OP_SHA256, OP_DUP, OP_DROP, OP_MIN, OP_MAX, OP_AND, OP_OR, OP_BOOLAND, OP_BOOLOR, OP_EQUAL.  This is simpler than introducing general iteration into script, and intuitive to constrain using varops.  It is particularly beneficial when examining inputs or outputs of a transaction, such as calculating fees.
+
+===Rationale===
+
+Bitcoin script was developed long before Taproot: OP_ECPOINTADD and OP_BYTEREV are the minimal missing opcodes required for creating Taproot trees in script.  The need for OP_CHECKSIGFROMSTACK and OP_SEGMENT are a side-effect of generic introspection, into the tx itself for arbitrary signature coverage, and into scripts to allow specification of partial spending requirements.  OP_INTERNALKEY is trivial, but can save 32 weight on a transaction in many cases, which is a non-trivial savings.  OP_MULTI is more complex, but allows for much more general handling of multiple inputs or outputs: bitcoin script does not have iteration, so all possible numbers have to be handled directly, which is unwieldy at best.
+
+There are definitely other opcodes which would be helpful, but from this point most are "merely" optimizations from what is now possible.  This itself is a major milestone: that future opcode proposals can be assessed numerically, by measuring the impact they would have on aggregate onchain space, and from there assessing whether the cost of implementation and deployment is worth the savings.
+
+===Detailed Specification===
+
+TBA.
+
+==Reference Implementation==
+
+None as yet.
+
+==TODO==
+
+- Are there other fundamental building blocks we are missing?  I don't see an immediate reason for OP_ECPOINTMUL, for example, but it would not be possible in script today (due to varops limits).
+- If we do want OP_INTERNALKEY, it should probably be a OP_TX selector bit.
+- Is OP_MULTI too ambitious?  I previously considered for-each-input and for-each-output iterators, but this is far simpler.
+- Can we come up with a better name for OP_CHECKSIGFROMSTACK?  Unfortunately OP_CHECKSIG is taken, but OP_THE_REAL_CHECKSIG isn't!
