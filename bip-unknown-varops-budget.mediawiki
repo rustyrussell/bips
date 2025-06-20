@@ -159,7 +159,7 @@ OP_EQUAL and OP_EQUALVERIFY don't have to examine any data (and the Bitcoin Core
 |length(A) + Length(A-th-from-top) (LENGTHCONV + COPYING)
 |-
 |OP_TUCK
-|length(B) (COPYING)
+|length(A) (COPYING)
 |-
 |OP_ROLL
 |length(A) (LENGTHCONV)
