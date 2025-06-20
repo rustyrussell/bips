@@ -96,12 +96,14 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 ! Value
 ! Required Stack Elements
 ! Varops Cost
+! Varops Reason
 ! Definition
 |-
 |OP_CAT
 |126
 |2
-|length(A) + length(B) (COPYING)
+|length(A) + length(B)
+|COPYING
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -111,7 +113,8 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 |OP_SUBSTR
 |127
 |3
-|length(LEN) + length(BEGIN) + MIN(Value of LEN, length(A) - Value of BEGIN, 0) (LENGTHCONV + COPYING)
+|length(LEN) + length(BEGIN) + MIN(Value of LEN, length(A) - Value of BEGIN, 0)
+|LENGTHCONV + COPYING
 |
 # Pop LEN off the stack.
 # Pop BEGIN off the stack.
@@ -123,7 +126,8 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 |OP_LEFT
 |128
 |2
-|length(OFFSET) (LENGTHCONV)
+|length(OFFSET)
+|LENGTHCONV
 |
 # Pop OFFSET off the stack.
 # Pop A off the stack.
@@ -133,7 +137,8 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 |OP_RIGHT
 |129
 |2
-|length(OFFSET) + MAX(length(A) - value of OFFSET, 0) (LENGTHCONV + COPYING)
+|length(OFFSET) + MAX(length(A) - value of OFFSET, 0)
+|LENGTHCONV + COPYING
 |
 # Pop OFFSET off the stack.
 # Pop A off the stack.
@@ -156,12 +161,14 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 ! Value
 ! Required Stack Elements
 ! Varops Cost
+! Varops Reason
 ! Definition
 |-
 |OP_INVERT
 |131
 |1
-|length(A) * 2 (OTHER)
+|length(A) * 2
+|OTHER
 |
 # Pop A off the stack.
 # For each byte in A, replace it with that byte bitwise XOR 0xFF (i.e. invert the bits)
@@ -170,7 +177,8 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_AND
 |132
 |2
-|length(A) + length(B) (OTHER, ZEROING)
+|length(A) + length(B)
+|OTHER + ZEROING
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -181,7 +189,8 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_OR
 |133
 |2
-|MIN(length(A), length(B)) * 2 (OTHER)
+|MIN(length(A), length(B)) * 2
+|OTHER
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -192,7 +201,8 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_XOR
 |134
 |2
-|MIN(length(A), length(B)) * 2 (OTHER)
+|MIN(length(A), length(B)) * 2
+|OTHER
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -214,12 +224,14 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 ! Value
 ! Required Stack Elements
 ! Varops Cost
+! Varops Reason
 ! Definition
 |-
 |OP_UPSHIFT
 |152
 |2
-|length(BITS) + (Value of BITS) / 8 + length(A) (LENGTHCONV + ZEROING + COPYING).  If BITS % 8 != 0, add length(A) * 2 (OTHER)
+|length(BITS) + (Value of BITS) / 8 + length(A).  If BITS % 8 != 0, add length(A) * 2
+|LENGTHCONV + ZEROING + COPYING. If BITS % 8 != 0, + OTHER.
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
@@ -231,7 +243,8 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 |OP_DOWNSHIFT
 |153
 |2
-|length(BITS) + MAX((length(A) - (Value of BITS) / 8), 0) * 2 (LENGTHCONV + OTHER)
+|length(BITS) + MAX((length(A) - (Value of BITS) / 8), 0) * 2
+|LENGTHCONV + OTHER
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
@@ -256,12 +269,14 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 ! Value
 ! Required Stack Elements
 ! Varops Cost
+! Varops Reason
 ! Definition
 |-
 |OP_2MUL
 |141
 |1
-|length(A) * 3 (OTHER + COPYING)
+|length(A) * 3
+|OTHER + COPYING
 |
 # Pop A off the stack.
 # Shift each byte in A 1 bit to the left (increasing values, equivalent to C's << operator), tracking the last non-zero value.
@@ -272,7 +287,8 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_2DIV
 |142
 |1
-|length(A) * 2 (OTHER)
+|length(A) * 2
+|OTHER
 |
 # Pop A off the stack.
 # Shift each byte 1 bit to the right (decreasing values, equivalent to C's >> operator), tracking the last non-zero value.
@@ -283,6 +299,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |149
 |2
 |length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 6  (BEWARE OVERFLOW)
+|See Appendix
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -296,6 +313,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |150
 |2
 |length(A) * 9 + length(B) * 2 + length(A)^2 / 3  (BEWARE OVERFLOW)
+|See Appendix
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -309,6 +327,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |151
 |2
 |length(A) * 9 + length(B) * 2 + length(A)^2 / 3  (BEWARE OVERFLOW)
+|See Appendix
 |
 # Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
 # If B is empty or all zeroes, fail.
@@ -340,12 +359,14 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 ! Value
 ! Required Stack Elements
 ! Varops Cost
+! Varops Reason
 ! Definition
 |-
 |OP_ADD
 |147
 |2
-|MAX(length(A), length(B)) * 4 (ARITH + COPYING)
+|MAX(length(A), length(B)) * 4
+|ARITH + COPYING
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -359,7 +380,8 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_1ADD
 |139
 |1
-|MAX(1, length(A)) * 4 (ARITH + COPYING)
+|MAX(1, length(A)) * 4
+|ARITH + COPYING
 |
 # Pop A off the stack.
 # Let B = 1, and continue as OP_ADD.
@@ -367,7 +389,8 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_SUB
 |148
 |2
-|MAX(length(A), length(B)) * 3 (ARITH)
+|MAX(length(A), length(B)) * 3
+|ARITH
 |
 # Pop B off the stack.
 # Pop A off the stack.
@@ -378,7 +401,8 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_1SUB
 |140	
 |1
-|MAX(1, length(A)) * 3 (ARITH)
+|MAX(1, length(A)) * 3
+|ARITH
 |
 # Pop A off the stack.
 # Let B = 1, and continue as OP_SUB.
@@ -397,21 +421,27 @@ The following opcodes have costs below:
 {|
 ! Opcode
 ! Varops Budget Cost
+! Varops Reason
 |-
 | OP_CHECKLOCKTIMEVERIFY
-| Length of operand (LENGTHCONV)
+| Length of operand
+| LENGTHCONV
 |-
 | OP_CHECKSEQUENCEVERIFY
-| Length of operand (LENGTHCONV)
+| Length of operand
+| LENGTHCONV
 |-
 | OP_CHECKSIGADD
-| MAX(1, length(number operand)) * 4 + 26000 (ARITH + COPYING + SIGCHECK)
+| MAX(1, length(number operand)) * 4 + 26000
+| ARITH + COPYING + SIGCHECK
 |-
 | OP_CHECKSIG
-| 26000 (SIGCHECK)
+| 26000
+| SIGCHECK
 |-
 | OP_CHECKSIGVERIFY
-| 26000 (SIGCHECK)
+| 26000
+| SIGCHECK
 |}
 
 ====Rationale====
@@ -450,6 +480,8 @@ The varops costs of the following opcodes are defined in [[bip-unknown-varops-bu
 * OP_SHA256
 * OP_HASH160
 * OP_HASH256
+
+Those with costs not defined here have a cost of 0 (they do not operate on variable-length stack objects).
 
 ==Backwards compatibility==
 
