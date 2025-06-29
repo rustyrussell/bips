@@ -20,6 +20,7 @@ In particular, this BIP:
 - Reenables disabled opcodes.
 - Increases the maximum stack object size from 520 bytes to 4,000,000 bytes.
 - Introduces a total stack byte limit of 8,000,000 bytes.
+- Increases the maximum total number of stack objects from 1000 to 32768.
 - Removes the 32-bit size restriction on numerical values.
 - Treats all numerical values as unsigned.
 
@@ -41,11 +42,17 @@ Validation of a script fails if:
 - It exceeds the remaining varops budget for the transaction.
 - Any stack element exceeds 4,000,000 bytes.
 - The total size of all stack (and altstack) elements exceeds 8,000,000 bytes.
-- The number of stack elements (including altstack elements) exceeds 1000 (i.e. unchanged from previous versions).
+- The number of stack elements (including altstack elements) exceeds 32768.
 
 ===Rationale===
 
-There needs to be some limit on memory usage, to avoid a memory-based denial of service.  Putting the entire transaction on the stack is a foreseeable use case, hence using the block size (4MB) as a limit makes sense.  However, allowing 1000 4MB stack elements is a significant increase in memory requirements, so a total limit of twice that many bytes (8MB) is introduced.  Many stack operations require making at least one copy, so this allows such use.
+There needs to be some limit on memory usage, to avoid a memory-based denial of service.
+
+Putting the entire transaction on the stack is a foreseeable use case, hence using the block size (4MB) as a limit makes sense.  However, allowing 4MB stack elements is a significant increase in memory requirements, so a total limit of twice that many bytes (8MB) is introduced.  Many stack operations require making at least one copy, so this allows such use.
+
+Putting all outputs or inputs from the transaction on the stack as separate elements requires as much stack capacity as there are inputs or outputs.  The smallest possible input is 34 bytes (allowing almost 26411 inputs), and the smallest possible output is 9 bytes (allowing almsot 111111 inputs).  However, empty outputs are rare and not economically interesting.  Thus we consider smallest non-OP_RETURN standard output script, which is P2WPKH at 22 bytes, giving a minimum output size of 31 bytes, allowing 32258 outputs in a maximally-sized transaction.
+
+This makes 32768 a reasonable upper limit for stack elements.
 
 ===SUCCESS Opcodes===
 

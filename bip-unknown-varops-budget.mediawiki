@@ -28,13 +28,13 @@ Since Bitcoin v0.3.1 (addressing CVE-2010-5137), Bitcoin's scripting capabilitie
 
 However, as Bitcoin usage becomes more sophisticated, these limitations are becoming more salient.  New proposals often must explicitly address potential performance pitfalls by severely limiting their scope, introducing specialized caching strategies to mitigate execution costs, or using the existing sigops budget in ad-hoc ways to enforce dynamic execution limits.
 
-This BIP introduces a simple, systematic and explicit cost framework for evaluating script operations based on stack data interactions, using worst-case behavior as the limiting factor.  Even with these pessimistic assumptions, large classes of scripts can be shown to be within budget by static analysis.
+This BIP introduces a simple, systematic and explicit cost framework for evaluating script operations based on stack data interactions, using worst-case behavior as the limiting factor.  Even with these pessimistic assumptions, large classes of scripts can be shown to be within budget (for all possible inputs) by static analysis.
 
 ===A Model For Opcodes Dealing With Stack Data===
 
 Without an explicit and low limit on the size of stack operands, the bottleneck for script operations is based on the time taken to process the stack data it accesses (the exceptions being signature operations).  The cost model uses the length of the stack inputs (or occasionally, outputs), hence the term "varops".
 
-- We assume that the manipulation of the stack vector itself (e.g. OP_DROP) is negligible.
+- We assume that the manipulation of the stack vector itself (e.g. OP_DROP) is negligible (with the exception of OP_ROLL)
 - We assume that memory allocation and deallocation overhead is negligible.
 - We do not consider the cost of the script interpretation itself, which is necessarily limited by block size.
 - We assume implementations use simple linear arrays/vectors of contiguous memory.
@@ -76,19 +76,21 @@ High End Machine:
 
 ===Cost Categories===
 
-We divided operations into four speed categories:
+We divided operations into five speed categories:
 
 1. Signature operations. 
 2. SHA256 operations.
-3. Fast operations: comparing bytes, comparing bytes against zero, copying bytes and zeroing bytes.  Empirically, these have been shown to be well-optimized.
-4. Everything else.
+3. OP_ROLL, which does a large-scale stack movement.
+4. Fast operations: comparing bytes, comparing bytes against zero, copying bytes and zeroing bytes.  Empirically, these have been shown to be well-optimized.
+5. Everything else.
 
 Each class then has the following costs.
 
 1. Signature operations cost 260,000 (5,200 * 50) units each.
 2. Hashing costs 10 units per byte hashed.
-3. Fast operations cost 1 unit per byte output.
-4. Other operations cost 2 units per byte output.
+3. OP_ROLL costs an additional 24 units per stack entry moved (i.e. the value of its operand).
+4. Fast operations cost 1 unit per byte output.
+5. Other operations cost 2 units per byte output.
 
 ===Variable Opcode Budget===
 
@@ -105,9 +107,11 @@ We use the following annotations to indicate the derivation for each opcode:
 ;LENGTHCONV
 : Converting an operand to a length value, including verifying that trailing bytes are zero: cost = 1 per byte copied.
 ;SIGCHECK
-: Checking a signature is a flat cost: cost = 260,000
+: Checking a signature is a flat cost: cost = 260,000.
 ;HASH
-: cost = 10 per byte hashed
+: cost = 10 per byte hashed.
+;ROLL
+: cost = 24 per stack element moved.
 ;OTHER
 : all other operations which take a variable-length parameter: cost = 2 per byte written.
 
@@ -195,7 +199,7 @@ OP_EQUAL and OP_EQUALVERIFY don't have to examine any data (and the Bitcoin Core
 |COPYING
 |-
 |OP_ROLL
-|length(A)
+|length(A) + 24 * Value of A
 |LENGTHCONV
 |-
 |}
@@ -203,6 +207,10 @@ OP_EQUAL and OP_EQUALVERIFY don't have to examine any data (and the Bitcoin Core
 ====Rationale====
 
 These operators copy a stack entry, write to another.  OP_IFDUP has the same worst-case cost as OP_IF + OP_DUP.
+
+OP_ROLL needs to read its operand, then move that many elements on the stack.  It is the only operand for which the stack manipuilation cost is variable (and, regretfully, non-trivial), so we need to limit it.
+
+A reasonable implementation (and the current bitcoind C++ implementation) is to use 24 bytes for each stack element (a pointer, a size and a maximum capacity), and this value works reasonably in practice.
 
 ===Example: Comparison Operators===
 
