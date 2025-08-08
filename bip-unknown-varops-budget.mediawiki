@@ -69,11 +69,44 @@ The signature cost is simply carried across from the existing [[bip-0342.mediawi
 
 ===Benchmarks===
 
-[FIXME: Put these numbers here!]
-Raspberry Pi 3: 
-Raspberry Pi 5:
-Intel Laptop:
-High End Machine:
+{|
+! Machine
+! OS
+! Compiler
+! Worst-case script
+! Worst-case time
+! Worst-case Schnorr eq
+|-
+| AMD Ryzen 5 3600
+| Linux
+| gcc
+| MUL_DUP_520Bx2
+| 2.30 s
+| 60261
+|-
+| Intel i5-12500
+| Linux
+| gcc
+| MUL_DUP_520Bx2
+| 2.07 s
+| 82963
+|-
+| Intel i7-7700
+| Linux
+| gcc
+| HASH256_DROP_DUP_10KBx2
+| 4.73 s
+| 128598
+|-
+| Apple M4 Pro
+| macOS
+| clang
+| RIPEMD160_DROP_DUP_520Bx2
+| 1.18 s
+| 83382
+|}
+
+We are looking for more benchmarks, so please contribute with your machine by checking out https://github.com/jmoik/bitcoin/tree/gsr and running ./build/bin/bench_varops --epochs 5 --file data.csv
 
 ===Cost Categories===
 
