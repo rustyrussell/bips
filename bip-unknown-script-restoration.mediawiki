@@ -3,7 +3,7 @@
   Layer: Consensus (soft fork)
   Title: Restoration of disabled script functionality (Tapscript v2)
   Author: Rusty Russell <rusty@rustcorp.com.au>
-          Julian
+          Julian Moik <julianmoik@gmail.com>
   Comments-URI: TBA
   Status: Draft
   Type: Standards Track

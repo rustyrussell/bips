@@ -3,7 +3,7 @@
   Layer: Consensus (soft fork)
   Title: Varops Budget For Script Runtime Constraint
   Author: Rusty Russell <rusty@rustcorp.com.au>
-          Julian
+          Julian Moik <julianmoik@gmail.com>
   Comments-URI: TBA
   Status: Draft
   Type: Standards Track
