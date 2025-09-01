@@ -1,2874 +1,2877 @@
 [
-  {
-    "category": "OP_VERIFY tests",
-    "tests": [
-      {
-        "name": "OP_VERIFY simple success (non-zero)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "69"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_VERIFY success (non-zero, multiple bytes)",
-        "initial stack": [
-          "00000001"
-        ],
-        "opcodes": [
-          "69"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_VERIFY fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "69"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_VERIFY fail (explicit zero byte)",
-        "initial stack": [
-          "00"
-        ],
-        "opcodes": [
-          "69"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_VERIFY fail (multi-zero)",
-        "initial stack": [
-          "00{4000000}"
-        ],
-        "opcodes": [
-          "69"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_VERIFY success (only last byte non-zero)",
-        "initial stack": [
-          "00{3999999}01"
-        ],
-        "opcodes": [
-          "69"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_VERIFY stack presence test (zero followed by 01)",
-        "initial stack": [
-          "00",
-          "01"
-        ],
-        "opcodes": [
-          "69"
-        ],
-        "success": true,
-        "final stack": [
-          "00"
-        ],
-        "varops cost": 1
-      }
-    ]
-  },
-  {
-    "category": "OP_NOT tests",
-    "tests": [
-      {
-        "name": "OP_NOT success (non-zero becomes empty string)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "91"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NOT success (multi-byte non-zero becomes empty string)",
-        "initial stack": [
-          "00000001"
-        ],
-        "opcodes": [
-          "91"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_NOT fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "91"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_NOT success (single zero byte)",
-        "initial stack": [
-          "00"
-        ],
-        "opcodes": [
-          "91"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NOT success (multi-byte all zero)",
-        "initial stack": [
-          "00{4000000}"
-        ],
-        "opcodes": [
-          "91"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_NOT success (explicit empty string)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "91"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_NOT success (only last byte non-zero)",
-        "initial stack": [
-          "00{3999999}01"
-        ],
-        "opcodes": [
-          "91"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 4000000
-      }
-    ]
-  },
-  {
-    "category": "OP_0NOTEQUAL tests",
-    "tests": [
-      {
-        "name": "OP_0NOTEQUAL success (non-zero becomes 01)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "92"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_0NOTEQUAL success (multi-byte non-zero becomes 01)",
-        "initial stack": [
-          "00000001"
-        ],
-        "opcodes": [
-          "92"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_0NOTEQUAL fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "92"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_0NOTEQUAL success (single zero becomes empty)",
-        "initial stack": [
-          "00"
-        ],
-        "opcodes": [
-          "92"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_0NOTEQUAL success (explicit empty string becomes empty)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "92"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_0NOTEQUAL success (multi-byte zero becomes empty)",
-        "initial stack": [
-          "00{4000000}"
-        ],
-        "opcodes": [
-          "92"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_0NOTEQUAL success (only last byte non-zero becomes 01)",
-        "initial stack": [
-          "00{3999999}01"
-        ],
-        "opcodes": [
-          "92"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4000000
-      }
-    ]
-  },
-  {
-    "category": "OP_EQUAL tests",
-    "tests": [
-      {
-        "name": "OP_EQUAL success (equal non-empty strings)",
-        "initial stack": [
-          "abcd",
-          "abcd"
-        ],
-        "opcodes": [
-          "87"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_EQUAL success (equal empty strings)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "87"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_EQUAL fail (non-equal same length)",
-        "initial stack": [
-          "abcd",
-          "abce"
-        ],
-        "opcodes": [
-          "87"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_EQUAL fail (different lengths)",
-        "initial stack": [
-          "abcd",
-          "ab"
-        ],
-        "opcodes": [
-          "87"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_EQUAL fail (prefix match only)",
-        "initial stack": [
-          "01",
-          "01{3999999}"
-        ],
-        "opcodes": [
-          "87"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_EQUAL fail (only one operand)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "87"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_EQUAL fail (zero operands)",
-        "initial stack": [],
-        "opcodes": [
-          "87"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_EQUALVERIFY tests",
-    "tests": [
-      {
-        "name": "OP_EQUALVERIFY success (equal non-empty strings)",
-        "initial stack": [
-          "abcd",
-          "abcd"
-        ],
-        "opcodes": [
-          "88"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_EQUALVERIFY success (equal empty strings)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "88"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_EQUALVERIFY fail (non-equal same length)",
-        "initial stack": [
-          "abcd",
-          "abce"
-        ],
-        "opcodes": [
-          "88"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_EQUALVERIFY fail (different lengths)",
-        "initial stack": [
-          "abcd",
-          "ab"
-        ],
-        "opcodes": [
-          "88"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_EQUALVERIFY fail (prefix match only)",
-        "initial stack": [
-          "01",
-          "01{3999999}"
-        ],
-        "opcodes": [
-          "88"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_EQUALVERIFY fail (only one operand)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "88"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_EQUALVERIFY fail (zero operands)",
-        "initial stack": [],
-        "opcodes": [
-          "88"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_2DUP tests",
-    "tests": [
-      {
-        "name": "OP_2DUP success (two small items)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "6e"
-        ],
-        "success": true,
-        "final stack": [
-          "01",
-          "02",
-          "01",
-          "02"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_2DUP fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "6e"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2DUP fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "6e"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2DUP success (stack total size exactly 8000000)",
-        "initial stack": [
-          "aa",
-          "ff{3999999}"
-        ],
-        "opcodes": [
-          "6e"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "ff{3999999}",
-          "aa",
-          "ff{3999999}"
-        ],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_2DUP fail (stack total size equals 8000001)",
-        "initial stack": [
-          "ffffff",
-          "ff{2000000}",
-          "ff{1999999}"
-        ],
-        "opcodes": [
-          "6e"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2DUP success (stack total size exactly 8000000 including altstack)",
-        "initial stack": [
-          "aa",
-          "ff{3999998}",
-          "bbcc"
-        ],
-        "opcodes": [
-          "6b",
-          "6e"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "ff{3999998}",
-          "aa",
-          "ff{3999998}"
-        ],
-        "final altstack": [
-          "bbcc"
-        ],
-        "varops cost": 3999999
-      },
-      {
-        "name": "OP_2DUP fail (stack total size including altstack equals 8000001)",
-        "initial stack": [
-          "ff{2000000}",
-          "ff{1999999}",
-          "ffffff"
-        ],
-        "opcodes": [
-          "6b",
-          "6e"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_DUP3 tests",
-    "tests": [
-      {
-        "name": "OP_DUP3 success (three small items)",
-        "initial stack": [
-          "01",
-          "02",
-          "03"
-        ],
-        "opcodes": [
-          "b0"
-        ],
-        "success": true,
-        "final stack": [
-          "01",
-          "02",
-          "03",
-          "01",
-          "02",
-          "03"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_DUP3 fail (only two items)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "b0"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_DUP3 fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "b0"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_DUP3 fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "b0"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_DUP3 success (stack total size exactly 8000000)",
-        "initial stack": [
-          "aa",
-          "bb",
-          "ff{3999998}"
-        ],
-        "opcodes": [
-          "b0"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "bb",
-          "ff{3999998}",
-          "aa",
-          "bb",
-          "ff{3999998}"
-        ],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_DUP3 fail (stack total size equals 8000001)",
-        "initial stack": [
-          "ffffff",
-          "ff{2000000}",
-          "ff{1999999}"
-        ],
-        "opcodes": [
-          "b0"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_DUP3 success (stack total size exactly 8000000 including altstack)",
-        "initial stack": [
-          "aa",
-          "bb",
-          "ff{3999995}",
-          "ccdd"
-        ],
-        "opcodes": [
-          "6b",
-          "b0"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "bb",
-          "ff{3999995}",
-          "aa",
-          "bb",
-          "ff{3999995}"
-        ],
-        "final altstack": [
-          "ccdd"
-        ],
-        "varops cost": 3999997
-      },
-      {
-        "name": "OP_DUP3 fail (stack+altstack total size = 8000001)",
-        "initial stack": [
-          "ff{2000000}",
-          "ff{1999999}",
-          "ffffff",
-          "aabbcc"
-        ],
-        "opcodes": [
-          "6b",
-          "b0"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_2OVER tests",
-    "tests": [
-      {
-        "name": "OP_2OVER success (four small items)",
-        "initial stack": [
-          "a1",
-          "b2",
-          "c3",
-          "d4"
-        ],
-        "opcodes": [
-          "b1"
-        ],
-        "success": true,
-        "final stack": [
-          "a1",
-          "b2",
-          "c3",
-          "d4",
-          "a1",
-          "b2"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_2OVER fail (three items)",
-        "initial stack": [
-          "a1",
-          "b2",
-          "c3"
-        ],
-        "opcodes": [
-          "b1"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2OVER fail (two items)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "b1"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2OVER fail (only one item)",
-        "initial stack": [
-          "ff"
-        ],
-        "opcodes": [
-          "b1"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2OVER fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "b1"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2OVER success (stack total size exactly 8000000)",
-        "initial stack": [
-          "aa",
-          "bb",
-          "ff{3999998}",
-          "00"
-        ],
-        "opcodes": [
-          "b1"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "bb",
-          "ff{3999998}",
-          "00",
-          "aa",
-          "bb"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_2OVER fail (stack total size exceeds 8000000)",
-        "initial stack": [
-          "01",
-          "02",
-          "ff{4000000}",
-          "ff{3999999}"
-        ],
-        "opcodes": [
-          "b1"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2OVER fail (stack+altstack exceeds 8000000)",
-        "initial stack": [
-          "ff{1999999}",
-          "ff{1999999}",
-          "ff{1999999}",
-          "ff{1999999}",
-          "deadbeef"
-        ],
-        "opcodes": [
-          "6b",
-          "b1"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_2OVER success (stack+altstack exactly 8000000)",
-        "initial stack": [
-          "aa",
-          "bb",
-          "ff{3999997}",
-          "cc",
-          "dd"
-        ],
-        "opcodes": [
-          "6b",
-          "b1"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "bb",
-          "ff{3999997}",
-          "cc",
-          "aa",
-          "bb"
-        ],
-        "final altstack": [
-          "dd"
-        ],
-        "varops cost": 2
-      }
-    ]
-  },
-  {
-    "category": "OP_IFDUP tests",
-    "tests": [
-      {
-        "name": "OP_IFDUP success (non-zero one-byte)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "73"
-        ],
-        "success": true,
-        "final stack": [
-          "01",
-          "01"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_IFDUP success (non-zero multi-byte)",
-        "initial stack": [
-          "0001"
-        ],
-        "opcodes": [
-          "73"
-        ],
-        "success": true,
-        "final stack": [
-          "0001",
-          "0001"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_IFDUP success (empty string is zero)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "73"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_IFDUP success (all-zero multi-byte is zero)",
-        "initial stack": [
-          "00{4000000}"
-        ],
-        "opcodes": [
-          "73"
-        ],
-        "success": true,
-        "final stack": [
-          "00{4000000}"
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_IFDUP success (last byte non-zero triggers duplication)",
-        "initial stack": [
-          "00{3999999}01"
-        ],
-        "opcodes": [
-          "73"
-        ],
-        "success": true,
-        "final stack": [
-          "00{3999999}01",
-          "00{3999999}01"
-        ],
-        "varops cost": 8000000
-      },
-      {
-        "name": "OP_IFDUP fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "73"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_IFDUP success (duplication puts stack+altstack exactly at 8000000)",
-        "initial stack": [
-          "ff{3999998}",
-          "aa"
-        ],
-        "opcodes": [
-          "6b",
-          "73"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "aa"
-        ],
-        "final altstack": [
-          "ff{3999998}"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_IFDUP fail (duplication causes stack+altstack > 8000000)",
-        "initial stack": [
-          "ff{4000000}",
-          "ab"
-        ],
-        "opcodes": [
-          "6b",
-          "73"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_DUP tests",
-    "tests": [
-      {
-        "name": "OP_DUP success (one-byte item)",
-        "initial stack": [
-          "ff"
-        ],
-        "opcodes": [
-          "76"
-        ],
-        "success": true,
-        "final stack": [
-          "ff",
-          "ff"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_DUP success (multi-byte item)",
-        "initial stack": [
-          "abcd"
-        ],
-        "opcodes": [
-          "76"
-        ],
-        "success": true,
-        "final stack": [
-          "abcd",
-          "abcd"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_DUP success (empty string)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "76"
-        ],
-        "success": true,
-        "final stack": [
-          "",
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_DUP fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "76"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_DUP success (stack+altstack exactly 8000000 after dup)",
-        "initial stack": [
-          "aa",
-          "ff{3999998}"
-        ],
-        "opcodes": [
-          "6b",
-          "76"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "aa"
-        ],
-        "final altstack": [
-          "ff{3999998}"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_DUP fail (stack+altstack > 8000000 after dup)",
-        "initial stack": [
-          "ff{4000000}",
-          "ab"
-        ],
-        "opcodes": [
-          "6b",
-          "76"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_OVER tests",
-    "tests": [
-      {
-        "name": "OP_OVER success (two small items)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "78"
-        ],
-        "success": true,
-        "final stack": [
-          "01",
-          "02",
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_OVER success (multi-byte item copied)",
-        "initial stack": [
-          "abcd",
-          "ef"
-        ],
-        "opcodes": [
-          "78"
-        ],
-        "success": true,
-        "final stack": [
-          "abcd",
-          "ef",
-          "abcd"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_OVER success (empty string copied)",
-        "initial stack": [
-          "",
-          "ff"
-        ],
-        "opcodes": [
-          "78"
-        ],
-        "success": true,
-        "final stack": [
-          "",
-          "ff",
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_OVER fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "78"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_OVER fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "78"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_OVER success (stack+altstack exactly 8000000)",
-        "initial stack": [
-          "ff{3999998}",
-          "aa"
-        ],
-        "opcodes": [
-          "6b",
-          "78"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "aa",
-          "aa"
-        ],
-        "final altstack": [
-          "ff{3999998}"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_OVER fail (stack+altstack > 8000000)",
-        "initial stack": [
-          "ff{4000000}",
-          "a1"
-        ],
-        "opcodes": [
-          "6b",
-          "78"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_TUCK tests",
-    "tests": [
-      {
-        "name": "OP_TUCK success (two small items)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "7d"
-        ],
-        "success": true,
-        "final stack": [
-          "02",
-          "01",
-          "02"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_TUCK success (multi-byte duplication)",
-        "initial stack": [
-          "a1",
-          "abcd"
-        ],
-        "opcodes": [
-          "7d"
-        ],
-        "success": true,
-        "final stack": [
-          "abcd",
-          "a1",
-          "abcd"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_TUCK success (empty string duplicated)",
-        "initial stack": [
-          "a1",
-          ""
-        ],
-        "opcodes": [
-          "7d"
-        ],
-        "success": true,
-        "final stack": [
-          "",
-          "a1",
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_TUCK fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "7d"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_TUCK fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "7d"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_TUCK success (stack+altstack exactly 8000000)",
-        "initial stack": [
-          "aa",
-          "ff{3999999}",
-          "bb"
-        ],
-        "opcodes": [
-          "6b",
-          "7d"
-        ],
-        "success": true,
-        "final stack": [
-          "ff{3999999}",
-          "aa",
-          "ff{3999999}"
-        ],
-        "final altstack": [
-          "bb"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_TUCK fail (stack+altstack > 8000000)",
-        "initial stack": [
-          "aa",
-          "ff{3999999}",
-          "bbbb"
-        ],
-        "opcodes": [
-          "6b",
-          "7d"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_PICK tests",
-    "tests": [
-      {
-        "name": "OP_PICK success (pick index 0 = top)",
-        "initial stack": [
-          "aa",
-          ""
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "aa"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_PICK success (pick index 1 = second)",
-        "initial stack": [
-          "aa",
-          "bb",
-          "01"
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "bb",
-          "aa"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_PICK success (multi-byte target and index)",
-        "initial stack": [
-          "ff{100}",
-          "ee",
-          "0001"
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": true,
-        "final stack": [
-          "ff{100}",
-          "ee",
-          "ff{100}"
-        ],
-        "varops cost": 102
-      },
-      {
-        "name": "OP_PICK success (zero-length target)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": true,
-        "final stack": [
-          "",
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_PICK fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "79"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_PICK fail (stack underflow for index 1)",
-        "initial stack": [
-          "aa",
-          "01"
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_PICK fail (index 3 out of bounds)",
-        "initial stack": [
-          "a1",
-          "b2",
-          "c3",
-          "03"
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_PICK success (non-minimal encoding of 0)",
-        "initial stack": [
-          "aa",
-          "0000"
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": true,
-        "final stack": [
-          "aa",
-          "aa"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_PICK success (0xff treated as large index, fails as out-of-bounds)",
-        "initial stack": [
-          "aa",
-          "ff"
-        ],
-        "opcodes": [
-          "79"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_PICK success (stack+altstack exactly 8000000)",
-        "initial stack": [
-          "ff{3999999}",
-          "eeee",
-          "01"
-        ],
-        "opcodes": [
-          "6b",
-          "79"
-        ],
-        "success": true,
-        "final stack": [
-          "eeee",
-          "ff{3999999}"
-        ],
-        "final altstack": [
-          "ff{3999999}"
-        ],
-        "varops cost": 4000001
-      },
-      {
-        "name": "OP_PICK fail (stack+altstack > 8000000)",
-        "initial stack": [
-          "ff{4000000}",
-          "",
-          "ab"
-        ],
-        "opcodes": [
-          "6b",
-          "79"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_ROLL tests",
-    "tests": [
-      {
-        "name": "OP_ROLL success (roll 0 = no change)",
-        "initial stack": [
-          "aa",
-          ""
-        ],
-        "opcodes": [
-          "7a"
-        ],
-        "success": true,
-        "final stack": [
-          "aa"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_ROLL success (roll 1 = swap)",
-        "initial stack": [
-          "aa",
-          "bb",
-          "01"
-        ],
-        "opcodes": [
-          "7a"
-        ],
-        "success": true,
-        "final stack": [
-          "bb",
-          "aa"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_ROLL success (roll from position 2)",
-        "initial stack": [
-          "a1",
-          "b2",
-          "c3",
-          "02"
-        ],
-        "opcodes": [
-          "7a"
-        ],
-        "success": true,
-        "final stack": [
-          "b2",
-          "c3",
-          "a1"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_ROLL success (non-minimally encoded 0)",
-        "initial stack": [
-          "aa",
-          "0000"
-        ],
-        "opcodes": [
-          "7a"
-        ],
-        "success": true,
-        "final stack": [
-          "aa"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_ROLL fail (index out of bounds)",
-        "initial stack": [
-          "a1",
-          "01"
-        ],
-        "opcodes": [
-          "7a"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_ROLL fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "7a"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_ROLL fail (only one item)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "7a"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_ROLL fail (ff interpreted as large index)",
-        "initial stack": [
-          "aa",
-          "ff"
-        ],
-        "opcodes": [
-          "7a"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_BOOLAND tests",
-    "tests": [
-      {
-        "name": "OP_BOOLAND success (both one-byte non-zero)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_BOOLAND success (multi-byte non-zero + single byte)",
-        "initial stack": [
-          "00000001",
-          "01"
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 5
-      },
-      {
-        "name": "OP_BOOLAND success (first zero)",
-        "initial stack": [
-          "00",
-          "01"
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_BOOLAND success (second zero)",
-        "initial stack": [
-          "01",
-          "00"
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_BOOLAND success (both empty)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_BOOLAND success (both multi-byte zero)",
-        "initial stack": [
-          "00{4000000}",
-          "00{4000000}"
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 8000000
-      },
-      {
-        "name": "OP_BOOLAND success (one non-zero at the end)",
-        "initial stack": [
-          "00{3999999}01",
-          "00{3999999}01"
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 8000000
-      },
-      {
-        "name": "OP_BOOLAND fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "9a"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_BOOLAND fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "9a"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_BOOLOR tests",
-    "tests": [
-      {
-        "name": "OP_BOOLOR success (both one-byte non-zero)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "9b"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_BOOLOR success (one zero, one non-zero)",
-        "initial stack": [
-          "00",
-          "01"
-        ],
-        "opcodes": [
-          "9b"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_BOOLOR success (one empty, one non-zero)",
-        "initial stack": [
-          "",
-          "01"
-        ],
-        "opcodes": [
-          "9b"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_BOOLOR success (both empty)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "9b"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_BOOLOR success (both multi-byte zero)",
-        "initial stack": [
-          "00{4000000}",
-          "00{4000000}"
-        ],
-        "opcodes": [
-          "9b"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 8000000
-      },
-      {
-        "name": "OP_BOOLOR success (one long non-zero)",
-        "initial stack": [
-          "00{3999999}01",
-          "00{4000000}"
-        ],
-        "opcodes": [
-          "9b"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 8000000
-      },
-      {
-        "name": "OP_BOOLOR fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "9b"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_BOOLOR fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "9b"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_NUMEQUAL tests",
-    "tests": [
-      {
-        "name": "OP_NUMEQUAL success (equal one-byte numbers)",
-        "initial stack": [
-          "01",
-          "01"
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NUMEQUAL success (equal numbers, padded)",
-        "initial stack": [
-          "01",
-          "010000"
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_NUMEQUAL success (both zero)",
-        "initial stack": [
-          "00",
-          ""
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NUMEQUAL fail (different values)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NUMEQUAL success (equal long values with trailing zeros)",
-        "initial stack": [
-          "ff{3999999}01",
-          "ff{3999999}01"
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_NUMEQUAL success (equal after trimming trailing zeros)",
-        "initial stack": [
-          "01",
-          "01000000"
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_NUMEQUAL fail (different lengths, same prefix)",
-        "initial stack": [
-          "01",
-          "0101"
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_NUMEQUAL fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "9c"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_NUMEQUAL fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "9c"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_NUMEQUALVERIFY tests",
-    "tests": [
-      {
-        "name": "OP_NUMEQUALVERIFY success (equal one-byte)",
-        "initial stack": [
-          "01",
-          "01"
-        ],
-        "opcodes": [
-          "9d"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NUMEQUALVERIFY success (equal with trailing zeros)",
-        "initial stack": [
-          "01",
-          "010000"
-        ],
-        "opcodes": [
-          "9d"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_NUMEQUALVERIFY success (both zero)",
-        "initial stack": [
-          "",
-          "00"
-        ],
-        "opcodes": [
-          "9d"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NUMEQUALVERIFY fail (different values)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "9d"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_NUMEQUALVERIFY success (long equal with trailing zeros)",
-        "initial stack": [
-          "ff{3999999}01",
-          "ff{3999999}01"
-        ],
-        "opcodes": [
-          "9d"
-        ],
-        "success": true,
-        "final stack": [],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_NUMEQUALVERIFY fail (same prefix, unequal)",
-        "initial stack": [
-          "01",
-          "0101"
-        ],
-        "opcodes": [
-          "9d"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_NUMEQUALVERIFY fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "9d"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_NUMEQUALVERIFY fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "9d"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_NUMNOTEQUAL tests",
-    "tests": [
-      {
-        "name": "OP_NUMNOTEQUAL success (different one-byte values)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "9e"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_NUMNOTEQUAL success (equal with padding)",
-        "initial stack": [
-          "01",
-          "010000"
-        ],
-        "opcodes": [
-          "9e"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_NUMNOTEQUAL success (both empty = equal)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "9e"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_NUMNOTEQUAL success (one empty, one padded zero = equal)",
-        "initial stack": [
-          "",
-          "000000"
-        ],
-        "opcodes": [
-          "9e"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_NUMNOTEQUAL success (long unequal values)",
-        "initial stack": [
-          "ff{3999999}01",
-          "ff{3999999}02"
-        ],
-        "opcodes": [
-          "9e"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4000000
-      },
-      {
-        "name": "OP_NUMNOTEQUAL fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "9e"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_NUMNOTEQUAL fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "9e"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_LESSTHAN tests",
-    "tests": [
-      {
-        "name": "OP_LESSTHAN success (1 < 2)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "9f"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_LESSTHAN success (2 < 1 is false)",
-        "initial stack": [
-          "02",
-          "01"
-        ],
-        "opcodes": [
-          "9f"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_LESSTHAN success (trailing zeros ignored)",
-        "initial stack": [
-          "01",
-          "01000000"
-        ],
-        "opcodes": [
-          "9f"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_LESSTHAN success (empty < 01)",
-        "initial stack": [
-          "",
-          "01"
-        ],
-        "opcodes": [
-          "9f"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_LESSTHAN success (01 < empty is false)",
-        "initial stack": [
-          "01",
-          ""
-        ],
-        "opcodes": [
-          "9f"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_LESSTHAN fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "9f"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_GREATERTHAN tests",
-    "tests": [
-      {
-        "name": "OP_GREATERTHAN success (2 > 1)",
-        "initial stack": [
-          "02",
-          "01"
-        ],
-        "opcodes": [
-          "a0"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_GREATERTHAN success (1 > 2 is false)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "a0"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_GREATERTHAN success (trailing zeros ignored)",
-        "initial stack": [
-          "010000",
-          "01"
-        ],
-        "opcodes": [
-          "a0"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 3
-      }
-    ]
-  },
-  {
-    "category": "OP_LESSTHANOREQUAL tests",
-    "tests": [
-      {
-        "name": "OP_LESSTHANOREQUAL success (1 <= 2)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "a1"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_LESSTHANOREQUAL success (2 <= 2)",
-        "initial stack": [
-          "02",
-          "02"
-        ],
-        "opcodes": [
-          "a1"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_LESSTHANOREQUAL success (3 <= 2 is false)",
-        "initial stack": [
-          "03",
-          "02"
-        ],
-        "opcodes": [
-          "a1"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      }
-    ]
-  },
-  {
-    "category": "OP_GREATERTHANOREQUAL tests",
-    "tests": [
-      {
-        "name": "OP_GREATERTHANOREQUAL success (3 >= 2)",
-        "initial stack": [
-          "03",
-          "02"
-        ],
-        "opcodes": [
-          "a2"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_GREATERTHANOREQUAL success (2 >= 2)",
-        "initial stack": [
-          "02",
-          "02"
-        ],
-        "opcodes": [
-          "a2"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_GREATERTHANOREQUAL success (1 >= 2 is false)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "a2"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_GREATERTHANOREQUAL fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "a2"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_MIN tests",
-    "tests": [
-      {
-        "name": "OP_MIN success (1 vs 2)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "a3"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_MIN success (3 vs 2)",
-        "initial stack": [
-          "03",
-          "02"
-        ],
-        "opcodes": [
-          "a3"
-        ],
-        "success": true,
-        "final stack": [
-          "02"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_MIN success (equal values)",
-        "initial stack": [
-          "05",
-          "050000"
-        ],
-        "opcodes": [
-          "a3"
-        ],
-        "success": true,
-        "final stack": [
-          "05"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_MIN success (empty and 01)",
-        "initial stack": [
-          "",
-          "01"
-        ],
-        "opcodes": [
-          "a3"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_MIN success (empty and empty)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "a3"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_MIN success (normalizes selected result)",
-        "initial stack": [
-          "020000",
-          "01"
-        ],
-        "opcodes": [
-          "a3"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_MIN fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "a3"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_MIN fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "a3"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_MAX tests",
-    "tests": [
-      {
-        "name": "OP_MAX success (1 vs 2)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "a4"
-        ],
-        "success": true,
-        "final stack": [
-          "02"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_MAX success (3 vs 2)",
-        "initial stack": [
-          "03",
-          "02"
-        ],
-        "opcodes": [
-          "a4"
-        ],
-        "success": true,
-        "final stack": [
-          "03"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_MAX success (equal values)",
-        "initial stack": [
-          "050000",
-          "05"
-        ],
-        "opcodes": [
-          "a4"
-        ],
-        "success": true,
-        "final stack": [
-          "050000"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_MAX success (empty and 01)",
-        "initial stack": [
-          "",
-          "01"
-        ],
-        "opcodes": [
-          "a4"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_MAX success (empty and empty)",
-        "initial stack": [
-          "",
-          ""
-        ],
-        "opcodes": [
-          "a4"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_MAX success (normalizes selected result)",
-        "initial stack": [
-          "01",
-          "020000"
-        ],
-        "opcodes": [
-          "a4"
-        ],
-        "success": true,
-        "final stack": [
-          "02"
-        ],
-        "varops cost": 3
-      },
-      {
-        "name": "OP_MAX fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "a4"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_MAX fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "a4"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_WITHIN tests",
-    "tests": [
-      {
-        "name": "OP_WITHIN success (2 in [1, 3))",
-        "initial stack": [
-          "02",
-          "01",
-          "03"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_WITHIN success (1 in [1, 3))",
-        "initial stack": [
-          "01",
-          "01",
-          "03"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_WITHIN success (3 not in [1, 3))",
-        "initial stack": [
-          "03",
-          "01",
-          "03"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_WITHIN success (0 not in [1, 3))",
-        "initial stack": [
-          "00",
-          "01",
-          "03"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": true,
-        "final stack": [
-          ""
-        ],
-        "varops cost": 2
-      },
-      {
-        "name": "OP_WITHIN success (trailing zeros ignored)",
-        "initial stack": [
-          "01",
-          "01000000",
-          "0300"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 4
-      },
-      {
-        "name": "OP_WITHIN success (empty values treated as 0)",
-        "initial stack": [
-          "",
-          "",
-          "01"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": true,
-        "final stack": [
-          "01"
-        ],
-        "varops cost": 1
-      },
-      {
-        "name": "OP_WITHIN fail (only two items)",
-        "initial stack": [
-          "01",
-          "02"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_WITHIN fail (only one item)",
-        "initial stack": [
-          "01"
-        ],
-        "opcodes": [
-          "a5"
-        ],
-        "success": false
-      },
-      {
-        "name": "OP_WITHIN fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "a5"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_SHA256 tests",
-    "tests": [
-      {
-        "name": "OP_SHA256 success (empty string)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "a8"
-        ],
-        "success": true,
-        "final stack": [
-          "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_SHA256 success (short string)",
-        "initial stack": [
-          "61"
-        ],
-        "opcodes": [
-          "a8"
-        ],
-        "success": true,
-        "final stack": [
-          "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
-        ],
-        "varops cost": 10
-      },
-      {
-        "name": "OP_SHA256 success (long input)",
-        "initial stack": [
-          "ff{4000000}"
-        ],
-        "opcodes": [
-          "a8"
-        ],
-        "success": true,
-        "final stack": [
-          "1627b4013371d63d947eb27740be7cf32aad311c0116e854bbe6ec89e7185e09"
-        ],
-        "varops cost": 40000000
-      },
-      {
-        "name": "OP_SHA256 fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "a8"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_HASH160 tests",
-    "tests": [
-      {
-        "name": "OP_HASH160 success (empty string)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "a9"
-        ],
-        "success": true,
-        "final stack": [
-          "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb"
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_HASH160 success (short string)",
-        "initial stack": [
-          "61"
-        ],
-        "opcodes": [
-          "a9"
-        ],
-        "success": true,
-        "final stack": [
-          "b1f79b1f70b36c92e68d7532a7fd6a68d4b2fdf1"
-        ],
-        "varops cost": 10
-      },
-      {
-        "name": "OP_HASH160 success (long input)",
-        "initial stack": [
-          "ff{4000000}"
-        ],
-        "opcodes": [
-          "a9"
-        ],
-        "success": true,
-        "final stack": [
-          "(hash160 of 4MB ff...)"
-        ],
-        "varops cost": 40000000
-      },
-      {
-        "name": "OP_HASH160 fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "a9"
-        ],
-        "success": false
-      }
-    ]
-  },
-  {
-    "category": "OP_HASH256 tests",
-    "tests": [
-      {
-        "name": "OP_HASH256 success (empty string)",
-        "initial stack": [
-          ""
-        ],
-        "opcodes": [
-          "aa"
-        ],
-        "success": true,
-        "final stack": [
-          "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456"
-        ],
-        "varops cost": 0
-      },
-      {
-        "name": "OP_HASH256 success (short string)",
-        "initial stack": [
-          "61"
-        ],
-        "opcodes": [
-          "aa"
-        ],
-        "success": true,
-        "final stack": [
-          "9595c9df900ebac4a9cd7ed0d53a2e85ad48a4127a3ee9ce3c8b636f979f7f1d"
-        ],
-        "varops cost": 10
-      },
-      {
-        "name": "OP_HASH256 success (long input)",
-        "initial stack": [
-          "ff{4000000}"
-        ],
-        "opcodes": [
-          "aa"
-        ],
-        "success": true,
-        "final stack": [
-          "(double sha256 of 4MB ff...)"
-        ],
-        "varops cost": 40000000
-      },
-      {
-        "name": "OP_HASH256 fail (empty stack)",
-        "initial stack": [],
-        "opcodes": [
-          "aa"
-        ],
-        "success": false
-      }
-    ]
-  }
+    {
+        "category": "OP_VERIFY tests",
+        "tests": [
+            {
+                "name": "OP_VERIFY simple success (non-zero)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "69"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_VERIFY success (non-zero, multiple bytes)",
+                "initial stack": [
+                    "00000001"
+                ],
+                "opcodes": [
+                    "69"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 4
+            },
+            {
+                "name": "OP_VERIFY fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "69"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_VERIFY fail (explicit zero byte)",
+                "initial stack": [
+                    "00"
+                ],
+                "opcodes": [
+                    "69"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_VERIFY fail (multi-zero)",
+                "initial stack": [
+                "00{4000000}"
+                ],
+                "opcodes": [
+                    "69"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_VERIFY success (only last byte non-zero)",
+                "initial stack": [
+                  "00{3999999}01"
+                ],
+                "opcodes": [
+                  "69"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 4000000
+              },
+                          {
+                "name": "OP_VERIFY stack presence test (zero followed by 01)",
+                "initial stack": [
+                    "00",
+                    "01"
+                ],
+                "opcodes": [
+                    "69"
+                ],
+                "success": true,
+                "final stack": [
+                    "00"
+                ],
+                "varops cost": 1
+            }
+        ]
+    },
+    {
+        "category": "OP_NOT tests",
+        "tests": [
+            {
+                "name": "OP_NOT success (non-zero becomes empty string)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "91"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NOT success (multi-byte non-zero becomes empty string)",
+                "initial stack": [
+                    "00000001"
+                ],
+                "opcodes": [
+                    "91"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 4
+            },
+            {
+                "name": "OP_NOT fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "91"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_NOT success (single zero byte)",
+                "initial stack": [
+                    "00"
+                ],
+                "opcodes": [
+                    "91"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NOT success (multi-byte all zero)",
+                "initial stack": [
+                "00{4000000}"
+                ],
+                "opcodes": [
+                "91"
+                ],
+                "success": true,
+                "final stack": [
+                "01"
+                ],
+                "varops cost": 4000000
+            },
+            {
+                "name": "OP_NOT success (explicit empty string)",
+                "initial stack": [
+                    ""
+                ],
+                "opcodes": [
+                    "91"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_NOT success (only last byte non-zero)",
+                "initial stack": [
+                  "00{3999999}01"
+                ],
+                "opcodes": [
+                  "91"
+                ],
+                "success": true,
+                "final stack": [
+                  ""
+                ],
+                "varops cost": 4000000
+              }
+        ]
+    },
+    {
+        "category": "OP_0NOTEQUAL tests",
+        "tests": [
+            {
+                "name": "OP_0NOTEQUAL success (non-zero becomes 01)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "92"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_0NOTEQUAL success (multi-byte non-zero becomes 01)",
+                "initial stack": [
+                    "00000001"
+                ],
+                "opcodes": [
+                    "92"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 4
+            },
+            {
+                "name": "OP_0NOTEQUAL fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "92"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_0NOTEQUAL success (single zero becomes empty)",
+                "initial stack": [
+                    "00"
+                ],
+                "opcodes": [
+                    "92"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_0NOTEQUAL success (explicit empty string becomes empty)",
+                "initial stack": [
+                  ""
+                ],
+                "opcodes": [
+                  "92"
+                ],
+                "success": true,
+                "final stack": [
+                  ""
+                ],
+                "varops cost": 0
+              },
+              {
+                "name": "OP_0NOTEQUAL success (multi-byte zero becomes empty)",
+                "initial stack": [
+                  "00{4000000}"
+                ],
+                "opcodes": [
+                  "92"
+                ],
+                "success": true,
+                "final stack": [
+                  ""
+                ],
+                "varops cost": 4000000
+              },
+              {
+                "name": "OP_0NOTEQUAL success (only last byte non-zero becomes 01)",
+                "initial stack": [
+                  "00{3999999}01"
+                ],
+                "opcodes": [
+                  "92"
+                ],
+                "success": true,
+                "final stack": [
+                  "01"
+                ],
+                "varops cost": 4000000
+              }
+        ]
+    },
+    {
+        "category": "OP_EQUAL tests",
+        "tests": [
+            {
+                "name": "OP_EQUAL success (equal non-empty strings)",
+                "initial stack": [
+                    "abcd",
+                    "abcd"
+                ],
+                "opcodes": [
+                    "87"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_EQUAL success (equal empty strings)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "87"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_EQUAL fail (non-equal same length)",
+                "initial stack": [
+                    "abcd",
+                    "abce"
+                ],
+                "opcodes": [
+                    "87"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_EQUAL fail (different lengths)",
+                "initial stack": [
+                    "abcd",
+                    "ab"
+                ],
+                "opcodes": [
+                    "87"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_EQUAL fail (prefix match only)",
+                "initial stack": [
+                  "01",
+                  "01{3999999}"
+                ],
+                "opcodes": [
+                  "87"
+                ],
+                "success": true,
+                "final stack": [
+                  ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_EQUAL fail (only one operand)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "87"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_EQUAL fail (zero operands)",
+                "initial stack": [],
+                "opcodes": [
+                    "87"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_EQUALVERIFY tests",
+        "tests": [
+            {
+                "name": "OP_EQUALVERIFY success (equal non-empty strings)",
+                "initial stack": [
+                    "abcd",
+                    "abcd"
+                ],
+                "opcodes": [
+                    "88"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_EQUALVERIFY success (equal empty strings)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "88"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_EQUALVERIFY fail (non-equal same length)",
+                "initial stack": [
+                    "abcd",
+                    "abce"
+                ],
+                "opcodes": [
+                    "88"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_EQUALVERIFY fail (different lengths)",
+                "initial stack": [
+                    "abcd",
+                    "ab"
+                ],
+                "opcodes": [
+                    "88"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_EQUALVERIFY fail (prefix match only)",
+                "initial stack": [
+                  "01",
+                  "01{3999999}"
+                ],
+                "opcodes": [
+                  "88"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_EQUALVERIFY fail (only one operand)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "88"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_EQUALVERIFY fail (zero operands)",
+                "initial stack": [],
+                "opcodes": [
+                    "88"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_2DUP tests",
+        "tests": [
+            {
+                "name": "OP_2DUP success (two small items)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "6e"
+                ],
+                "success": true,
+                "final stack": [
+                    "01",
+                    "02",
+                    "01",
+                    "02"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_2DUP fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "6e"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_2DUP fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "6e"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_2DUP success (stack total size exactly 8000000)",
+                "initial stack": [
+                  "aa",
+                  "ff{3999999}"
+                ],
+                "opcodes": [
+                  "6e"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "ff{3999999}",
+                  "aa",
+                  "ff{3999999}"
+                ],
+                "varops cost": 4000000
+              },
+              {
+                "name": "OP_2DUP fail (stack total size equals 8000001)",
+                "initial stack": [
+                  "ffffff",
+                  "ff{2000000}",
+                  "ff{1999999}"
+                ],
+                "opcodes": [
+                  "6e"
+                ],
+                "success": false
+              },
+              {
+                "name": "OP_2DUP success (stack total size exactly 8000000 including altstack)",
+                "initial stack": [
+                  "aa",
+                  "ff{3999998}",
+                  "bbcc"
+                ],
+                "opcodes": [
+                  "6b",
+                  "6e"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "ff{3999998}",
+                  "aa",
+                  "ff{3999998}"
+                ],
+                "final altstack": [
+                  "bbcc"
+                ],
+                "varops cost": 4000001
+              },
+              {
+                "name": "OP_2DUP fail (stack total size including altstack equals 8000001)",
+                "initial stack": [
+                  "ff{2000000}",
+                  "ff{1999999}",
+                  "ffffff"
+                ],
+                "opcodes": [
+                  "6b",
+                  "6e"
+                ],
+                "success": false
+              }
+        ]
+    },
+    {
+        "category": "OP_DUP3 tests",
+        "tests": [
+            {
+                "name": "OP_DUP3 success (three small items)",
+                "initial stack": [
+                    "01",
+                    "02",
+                    "03"
+                ],
+                "opcodes": [
+                    "6f"
+                ],
+                "success": true,
+                "final stack": [
+                    "01",
+                    "02",
+                    "03",
+                    "01",
+                    "02",
+                    "03"
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_DUP3 fail (only two items)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "6f"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_DUP3 fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "6f"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_DUP3 fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "6f"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_DUP3 success (stack total size exactly 8000000)",
+                "initial stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999998}"
+                ],
+                "opcodes": [
+                  "6f"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999998}",
+                  "aa",
+                  "bb",
+                  "ff{3999998}"
+                ],
+                "varops cost": 4000000
+              },
+              {
+                "name": "OP_DUP3 fail (stack total size equals 8000001)",
+                "initial stack": [
+                  "ffffff",
+                  "ff{2000000}",
+                  "ff{1999999}"
+                ],
+                "opcodes": [
+                  "6f"
+                ],
+                "success": false
+              },
+              {
+                "name": "OP_DUP3 success (stack total size exactly 8000000 including altstack)",
+                "initial stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999995}",
+                  "ccdd"
+                ],
+                "opcodes": [
+                  "6b",
+                  "6f"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999995}",
+                  "aa",
+                  "bb",
+                  "ff{3999995}"
+                ],
+                "final altstack": [
+                  "ccdd"
+                ],
+                "varops cost": 3999999
+              },
+              {
+                "name": "OP_DUP3 fail (stack+altstack total size = 8000001)",
+                "initial stack": [
+                  "ff{2000000}",
+                  "ff{1999999}",
+                  "ffffff",
+                  "aabbcc"
+                ],
+                "opcodes": [
+                  "6b",
+                  "6f"
+                ],
+                "success": false
+              }
+        ]
+    },
+    {
+        "category": "OP_2OVER tests",
+        "tests": [
+            {
+                "name": "OP_2OVER success (four small items)",
+                "initial stack": [
+                    "a1",
+                    "b2",
+                    "c3",
+                    "d4"
+                ],
+                "opcodes": [
+                    "70"
+                ],
+                "success": true,
+                "final stack": [
+                    "a1",
+                    "b2",
+                    "c3",
+                    "d4",
+                    "a1",
+                    "b2"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_2OVER fail (three items)",
+                "initial stack": [
+                    "a1",
+                    "b2",
+                    "c3"
+                ],
+                "opcodes": [
+                    "70"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_2OVER fail (two items)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "70"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_2OVER fail (only one item)",
+                "initial stack": [
+                    "ff"
+                ],
+                "opcodes": [
+                    "70"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_2OVER fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "70"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_2OVER success (stack total size exactly 8000000)",
+                "initial stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999998}",
+                  "00"
+                ],
+                "opcodes": [
+                  "70"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999998}",
+                  "00",
+                  "aa",
+                  "bb"
+                ],
+                "varops cost": 2
+              },
+              {
+                "name": "OP_2OVER fail (stack total size exceeds 8000000)",
+                "initial stack": [
+                  "01",
+                  "02",
+                  "ff{4000000}",
+                  "ff{3999999}"
+                ],
+                "opcodes": [
+                  "70"
+                ],
+                "success": false
+              },
+              {
+                "name": "OP_2OVER fail (stack+altstack exceeds 8000000)",
+                "initial stack": [
+                  "ff{1999999}",
+                  "ff{1999999}",
+                  "ff{1999999}",
+                  "ff{1999999}",
+                  "deadbeef"
+                ],
+                "opcodes": [
+                  "6b",
+                  "70"
+                ],
+                "success": false
+              },
+              {
+                "name": "OP_2OVER success (stack+altstack exactly 8000000)",
+                "initial stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999997}",
+                  "cc",
+                  "dd"
+                ],
+                "opcodes": [
+                  "6b",
+                  "70"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "bb",
+                  "ff{3999997}",
+                  "cc",
+                  "aa",
+                  "bb"
+                ],
+                "final altstack": [
+                  "dd"
+                ],
+                "varops cost": 3
+              }
+        ]
+    },
+    {
+        "category": "OP_IFDUP tests",
+        "tests": [
+            {
+                "name": "OP_IFDUP success (non-zero one-byte)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "73"
+                ],
+                "success": true,
+                "final stack": [
+                    "01",
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_IFDUP success (non-zero multi-byte)",
+                "initial stack": [
+                    "0001"
+                ],
+                "opcodes": [
+                    "73"
+                ],
+                "success": true,
+                "final stack": [
+                    "0001",
+                    "0001"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_IFDUP success (empty string is zero)",
+                "initial stack": [
+                    ""
+                ],
+                "opcodes": [
+                    "73"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_IFDUP success (all-zero multi-byte is zero)",
+                "initial stack": [
+                  "00{4000000}"
+                ],
+                "opcodes": [
+                  "73"
+                ],
+                "success": true,
+                "final stack": [
+                  "00{4000000}"
+                ],
+                "varops cost": 4000000
+              },
+              {
+                "name": "OP_IFDUP success (last byte non-zero triggers duplication)",
+                "initial stack": [
+                  "00{3999999}01"
+                ],
+                "opcodes": [
+                  "73"
+                ],
+                "success": true,
+                "final stack": [
+                  "00{3999999}01",
+                  "00{3999999}01"
+                ],
+                "varops cost": 4000000
+            },
+            {
+                "name": "OP_IFDUP fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "73"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_IFDUP success (duplication puts stack+altstack exactly at 8000000)",
+                "initial stack": [
+                    "aa",
+                    "ff{3999998}"
+                ],
+                "opcodes": [
+                  "6b",
+                  "73"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "aa"
+                ],
+                "final altstack": [
+                  "ff{3999998}"
+                ],
+                "varops cost": 3999999
+              },
+              {
+                "name": "OP_IFDUP fail (duplication causes stack+altstack > 8000000)",
+                "initial stack": [
+                  "ff{4000000}",
+                  "ab"
+                ],
+                "opcodes": [
+                  "6b",
+                  "73"
+                ],
+                "success": false
+              }
+        ]
+    },
+    {
+        "category": "OP_DUP tests",
+        "tests": [
+            {
+                "name": "OP_DUP success (one-byte item)",
+                "initial stack": [
+                    "ff"
+                ],
+                "opcodes": [
+                    "76"
+                ],
+                "success": true,
+                "final stack": [
+                    "ff",
+                    "ff"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_DUP success (multi-byte item)",
+                "initial stack": [
+                    "abcd"
+                ],
+                "opcodes": [
+                    "76"
+                ],
+                "success": true,
+                "final stack": [
+                    "abcd",
+                    "abcd"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_DUP success (empty string)",
+                "initial stack": [
+                    ""
+                ],
+                "opcodes": [
+                    "76"
+                ],
+                "success": true,
+                "final stack": [
+                    "",
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_DUP fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "76"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_DUP success (stack+altstack exactly 8000000 after dup)",
+                "initial stack": [
+                  "aa",
+                  "ff{3999998}"
+                ],
+                "opcodes": [
+                  "6b",
+                  "76"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "aa"
+                ],
+                "final altstack": [
+                  "ff{3999998}"
+                ],
+                "varops cost": 3999999
+              },
+              {
+                "name": "OP_DUP fail (stack+altstack > 8000000 after dup)",
+                "initial stack": [
+                  "ff{4000000}",
+                  "ab"
+                ],
+                "opcodes": [
+                  "6b",
+                  "76"
+                ],
+                "success": false
+              }
+        ]
+    },
+    {
+        "category": "OP_OVER tests",
+        "tests": [
+            {
+                "name": "OP_OVER success (two small items)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "78"
+                ],
+                "success": true,
+                "final stack": [
+                    "01",
+                    "02",
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_OVER success (multi-byte item copied)",
+                "initial stack": [
+                    "abcd",
+                    "ef"
+                ],
+                "opcodes": [
+                    "78"
+                ],
+                "success": true,
+                "final stack": [
+                    "abcd",
+                    "ef",
+                    "abcd"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_OVER success (empty string copied)",
+                "initial stack": [
+                    "",
+                    "ff"
+                ],
+                "opcodes": [
+                    "78"
+                ],
+                "success": true,
+                "final stack": [
+                    "",
+                    "ff",
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_OVER fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "78"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_OVER fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "78"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_OVER success (stack+altstack exactly 8000000)",
+                "initial stack": [
+                    "aa",
+                    "bb",
+                    "ff{3999998}"
+                ],
+                  "opcodes": [
+                  "6b",
+                  "78"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "bb",
+                  "aa"
+                ],
+                "final altstack": [
+                  "ff{3999998}"
+                ],
+                "varops cost": 3999999
+              },
+              {
+                "name": "OP_OVER fail (stack+altstack > 8000000)",
+                "initial stack": [
+                  "ff{4000000}",
+                  "a1"
+                ],
+                "opcodes": [
+                  "6b",
+                  "78"
+                ],
+                "success": false
+              }
+        ]
+    },
+    {
+        "category": "OP_TUCK tests",
+        "tests": [
+            {
+                "name": "OP_TUCK success (two small items)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "7d"
+                ],
+                "success": true,
+                "final stack": [
+                    "02",
+                    "01",
+                    "02"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_TUCK success (multi-byte duplication)",
+                "initial stack": [
+                    "a1",
+                    "abcd"
+                ],
+                "opcodes": [
+                    "7d"
+                ],
+                "success": true,
+                "final stack": [
+                    "abcd",
+                    "a1",
+                    "abcd"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_TUCK success (empty string duplicated)",
+                "initial stack": [
+                    "a1",
+                    ""
+                ],
+                "opcodes": [
+                    "7d"
+                ],
+                "success": true,
+                "final stack": [
+                    "",
+                    "a1",
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_TUCK fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "7d"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_TUCK fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "7d"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_TUCK success (stack+altstack exactly 8000000)",
+                "initial stack": [
+                  "aa",
+                  "ff{3999999}",
+                  "bb"
+                ],
+                "opcodes": [
+                  "6b",
+                  "7d"
+                ],
+                "success": true,
+                "final stack": [
+                  "ff{3999999}",
+                  "aa",
+                  "ff{3999999}"
+                ],
+                "final altstack": [
+                  "bb"
+                ],
+                "varops cost": 4000000
+              },
+              {
+                "name": "OP_TUCK fail (stack+altstack > 8000000)",
+                "initial stack": [
+                  "aa",
+                  "ff{3999999}",
+                  "bbbb"
+                ],
+                "opcodes": [
+                  "6b",
+                  "7d"
+                ],
+                "success": false
+              }
+        ]
+    },
+    {
+        "category": "OP_PICK tests",
+        "tests": [
+            {
+                "name": "OP_PICK success (pick index 0 = top)",
+                "initial stack": [
+                    "aa",
+                    ""
+                ],
+                "opcodes": [
+                    "79"
+                ],
+                "success": true,
+                "final stack": [
+                    "aa",
+                    "aa"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_PICK success (pick index 1 = second)",
+                "initial stack": [
+                    "aa",
+                    "bb",
+                    "01"
+                ],
+                "opcodes": [
+                    "79"
+                ],
+                "success": true,
+                "final stack": [
+                    "aa",
+                    "bb",
+                    "aa"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_PICK success (multi-byte target and index)",
+                "initial stack": [
+                  "ff{100}",
+                  "ee",
+                  "0100"
+                ],
+                "opcodes": [
+                  "79"
+                ],
+                "success": true,
+                "final stack": [
+                  "ff{100}",
+                  "ee",
+                  "ff{100}"
+                ],
+                "varops cost": 102
+            },
+            {
+                "name": "OP_PICK success (zero-length target)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "79"
+                ],
+                "success": true,
+                "final stack": [
+                    "",
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_PICK fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "79"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_PICK fail (stack underflow for index 1)",
+                "initial stack": [
+                    "aa",
+                    "01"
+                ],
+                "opcodes": [
+                    "79"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_PICK fail (index 3 out of bounds)",
+                "initial stack": [
+                    "a1",
+                    "b2",
+                    "c3",
+                    "03"
+                ],
+                "opcodes": [
+                    "79"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_PICK success (non-minimal encoding of 0)",
+                "initial stack": [
+                    "aa",
+                    "0000"
+                ],
+                "opcodes": [
+                    "79"
+                ],
+                "success": true,
+                "final stack": [
+                    "aa",
+                    "aa"
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_PICK success (0xff treated as large index, fails as out-of-bounds)",
+                "initial stack": [
+                    "aa",
+                    "ff"
+                ],
+                "opcodes": [
+                    "79"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_PICK success (stack+altstack exactly 8000000)",
+                "initial stack": [
+                    "aa",
+                    "eeee",
+                    "01",
+                    "ff{3999999}"
+                ],
+                "opcodes": [
+                  "6b",
+                  "79"
+                ],
+                "success": true,
+                "final stack": [
+                  "aa",
+                  "eeee",
+                  "aa"
+                ],
+                "final altstack": [
+                  "ff{3999999}"
+                ],
+                "varops cost": 4000001
+              },
+              {
+                "name": "OP_PICK fail (stack+altstack > 8000000)",
+                "initial stack": [
+                  "ff{4000000}",
+                  "",
+                  "ab"
+                ],
+                "opcodes": [
+                  "6b",
+                  "79"
+                ],
+                "success": false
+              }
+        ]
+    },
+    {
+        "category": "OP_ROLL tests",
+        "tests": [
+            {
+                "name": "OP_ROLL success (roll 0 = no change)",
+                "initial stack": [
+                    "aa",
+                    ""
+                ],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": true,
+                "final stack": [
+                    "aa"
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_ROLL success (roll 1 = swap)",
+                "initial stack": [
+                    "aa",
+                    "bb",
+                    "01"
+                ],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": true,
+                "final stack": [
+                    "bb",
+                    "aa"
+                ],
+                "varops cost": 25
+            },
+            {
+                "name": "OP_ROLL success (roll from position 2)",
+                "initial stack": [
+                    "a1",
+                    "b2",
+                    "c3",
+                    "02"
+                ],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": true,
+                "final stack": [
+                    "b2",
+                    "c3",
+                    "a1"
+                ],
+                "varops cost": 49
+            },
+            {
+                "name": "OP_ROLL success (non-minimally encoded 0)",
+                "initial stack": [
+                    "aa",
+                    "0000"
+                ],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": true,
+                "final stack": [
+                    "aa"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_ROLL fail (index out of bounds)",
+                "initial stack": [
+                    "a1",
+                    "01"
+                ],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_ROLL fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_ROLL fail (only one item)",
+                "initial stack": [
+                    ""
+                ],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_ROLL fail (ff interpreted as large index)",
+                "initial stack": [
+                    "aa",
+                    "ff"
+                ],
+                "opcodes": [
+                    "7a"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_BOOLAND tests",
+        "tests": [
+            {
+                "name": "OP_BOOLAND success (both one-byte non-zero)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "9a"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_BOOLAND success (multi-byte non-zero + single byte)",
+                "initial stack": [
+                    "00000001",
+                    "01"
+                ],
+                "opcodes": [
+                    "9a"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 5
+            },
+            {
+                "name": "OP_BOOLAND success (first zero)",
+                "initial stack": [
+                    "00",
+                    "01"
+                ],
+                "opcodes": [
+                    "9a"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_BOOLAND success (second zero)",
+                "initial stack": [
+                    "01",
+                    "00"
+                ],
+                "opcodes": [
+                    "9a"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_BOOLAND success (both empty)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "9a"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_BOOLAND success (both multi-byte zero) FIXME (why is this true?)",
+                "initial stack": [
+                  "00{4000000}",
+                  "00{4000000}"
+                ],
+                "opcodes": [
+                  "9a"
+                ],
+                "success": true,
+                "final stack": [
+                  ""
+                ],
+                "varops cost": 4000000
+              },
+              {
+                "name": "OP_BOOLAND success (one non-zero at the end)",
+                "initial stack": [
+                  "00{3999999}01",
+                  "00{3999999}01"
+                ],
+                "opcodes": [
+                  "9a"
+                ],
+                "success": true,
+                "final stack": [
+                  "01"
+                ],
+                "varops cost": 8000000
+            },
+            {
+                "name": "OP_BOOLAND fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "9a"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_BOOLAND fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "9a"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_BOOLOR tests",
+        "tests": [
+            {
+                "name": "OP_BOOLOR success (both one-byte non-zero)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "9b"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_BOOLOR success (one zero, one non-zero)",
+                "initial stack": [
+                    "00",
+                    "01"
+                ],
+                "opcodes": [
+                    "9b"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_BOOLOR success (one empty, one non-zero)",
+                "initial stack": [
+                    "",
+                    "01"
+                ],
+                "opcodes": [
+                    "9b"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_BOOLOR success (both empty)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "9b"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_BOOLOR success (both multi-byte zero) FIXME (why is this true?)",
+                "initial stack": [
+                  "00{4000000}",
+                  "00{4000000}"
+                ],
+                "opcodes": [
+                  "9b"
+                ],
+                "success": true,
+                "final stack": [
+                  ""
+                ],
+                "varops cost": 8000000
+              },
+              {
+                "name": "OP_BOOLOR success (one long non-zero)",
+                "initial stack": [
+                  "00{3999999}01",
+                  "00{4000000}"
+                ],
+                "opcodes": [
+                  "9b"
+                ],
+                "success": true,
+                "final stack": [
+                  "01"
+                ],
+                "varops cost": 4000000
+            },
+            {
+                "name": "OP_BOOLOR fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "9b"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_BOOLOR fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "9b"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_NUMEQUAL tests",
+        "tests": [
+            {
+                "name": "OP_NUMEQUAL success (equal one-byte numbers)",
+                "initial stack": [
+                    "01",
+                    "01"
+                ],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NUMEQUAL success (equal numbers, padded)",
+                "initial stack": [
+                    "01",
+                    "010000"
+                ],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_NUMEQUAL success (both zero)",
+                "initial stack": [
+                    "00",
+                    ""
+                ],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NUMEQUAL fail (different values)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NUMEQUAL success (equal long values with trailing zeros)",
+                "initial stack": [
+                  "ff{3999999}01",
+                  "ff{3999999}01"
+                ],
+                "opcodes": [
+                  "9c"
+                ],
+                "success": true,
+                "final stack": [
+                  "01"
+                ],
+                "varops cost": 4000000
+            },
+            {
+                "name": "OP_NUMEQUAL success (equal after trimming trailing zeros)",
+                "initial stack": [
+                    "01",
+                    "01000000"
+                ],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 4
+            },
+            {
+                "name": "OP_NUMEQUAL fail (different lengths, same prefix)",
+                "initial stack": [
+                    "01",
+                    "0101"
+                ],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_NUMEQUAL fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_NUMEQUAL fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "9c"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_NUMEQUALVERIFY tests",
+        "tests": [
+            {
+                "name": "OP_NUMEQUALVERIFY success (equal one-byte)",
+                "initial stack": [
+                    "01",
+                    "01"
+                ],
+                "opcodes": [
+                    "9d"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NUMEQUALVERIFY success (equal with trailing zeros)",
+                "initial stack": [
+                    "01",
+                    "010000"
+                ],
+                "opcodes": [
+                    "9d"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_NUMEQUALVERIFY success (both zero)",
+                "initial stack": [
+                    "",
+                    "00"
+                ],
+                "opcodes": [
+                    "9d"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NUMEQUALVERIFY fail (different values)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "9d"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_NUMEQUALVERIFY success (long equal with trailing zeros)",
+                "initial stack": [
+                  "ff{3999999}01",
+                  "ff{3999999}01"
+                ],
+                "opcodes": [
+                  "9d"
+                ],
+                "success": true,
+                "final stack": [],
+                "varops cost": 4000000
+            },
+            {
+                "name": "OP_NUMEQUALVERIFY fail (same prefix, unequal)",
+                "initial stack": [
+                    "01",
+                    "0101"
+                ],
+                "opcodes": [
+                    "9d"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_NUMEQUALVERIFY fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "9d"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_NUMEQUALVERIFY fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "9d"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_NUMNOTEQUAL tests",
+        "tests": [
+            {
+                "name": "OP_NUMNOTEQUAL success (different one-byte values)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "9e"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_NUMNOTEQUAL success (equal with padding)",
+                "initial stack": [
+                    "01",
+                    "010000"
+                ],
+                "opcodes": [
+                    "9e"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_NUMNOTEQUAL success (both empty = equal)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "9e"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_NUMNOTEQUAL success (one empty, one padded zero = equal)",
+                "initial stack": [
+                    "",
+                    "000000"
+                ],
+                "opcodes": [
+                    "9e"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_NUMNOTEQUAL success (long unequal values)",
+                "initial stack": [
+                  "ff{3999999}01",
+                  "ff{3999999}02"
+                ],
+                "opcodes": [
+                  "9e"
+                ],
+                "success": true,
+                "final stack": [
+                  "01"
+                ],
+                "varops cost": 4000000
+            },
+            {
+                "name": "OP_NUMNOTEQUAL fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "9e"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_NUMNOTEQUAL fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "9e"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_LESSTHAN tests",
+        "tests": [
+            {
+                "name": "OP_LESSTHAN success (1 < 2)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "9f"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_LESSTHAN success (2 < 1 is false)",
+                "initial stack": [
+                    "02",
+                    "01"
+                ],
+                "opcodes": [
+                    "9f"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_LESSTHAN success (trailing zeros ignored)",
+                "initial stack": [
+                    "01",
+                    "01000000"
+                ],
+                "opcodes": [
+                    "9f"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 4
+            },
+            {
+                "name": "OP_LESSTHAN success (empty < 01)",
+                "initial stack": [
+                    "",
+                    "01"
+                ],
+                "opcodes": [
+                    "9f"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_LESSTHAN success (01 < empty is false)",
+                "initial stack": [
+                    "01",
+                    ""
+                ],
+                "opcodes": [
+                    "9f"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_LESSTHAN fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "9f"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_GREATERTHAN tests",
+        "tests": [
+            {
+                "name": "OP_GREATERTHAN success (2 > 1)",
+                "initial stack": [
+                    "02",
+                    "01"
+                ],
+                "opcodes": [
+                    "a0"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_GREATERTHAN success (1 > 2 is false)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "a0"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_GREATERTHAN success (trailing zeros ignored)",
+                "initial stack": [
+                    "010000",
+                    "01"
+                ],
+                "opcodes": [
+                    "a0"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 3
+            }
+        ]
+    },
+    {
+        "category": "OP_LESSTHANOREQUAL tests",
+        "tests": [
+            {
+                "name": "OP_LESSTHANOREQUAL success (1 <= 2)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "a1"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_LESSTHANOREQUAL success (2 <= 2)",
+                "initial stack": [
+                    "02",
+                    "02"
+                ],
+                "opcodes": [
+                    "a1"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_LESSTHANOREQUAL success (3 <= 2 is false)",
+                "initial stack": [
+                    "03",
+                    "02"
+                ],
+                "opcodes": [
+                    "a1"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            }
+        ]
+    },
+    {
+        "category": "OP_GREATERTHANOREQUAL tests",
+        "tests": [
+            {
+                "name": "OP_GREATERTHANOREQUAL success (3 >= 2)",
+                "initial stack": [
+                    "03",
+                    "02"
+                ],
+                "opcodes": [
+                    "a2"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_GREATERTHANOREQUAL success (2 >= 2)",
+                "initial stack": [
+                    "02",
+                    "02"
+                ],
+                "opcodes": [
+                    "a2"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_GREATERTHANOREQUAL success (1 >= 2 is false)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "a2"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_GREATERTHANOREQUAL fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "a2"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_MIN tests",
+        "tests": [
+            {
+                "name": "OP_MIN success (1 vs 2)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_MIN success (3 vs 2)",
+                "initial stack": [
+                    "03",
+                    "02"
+                ],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": true,
+                "final stack": [
+                    "02"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_MIN success (equal values)",
+                "initial stack": [
+                    "05",
+                    "050000"
+                ],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": true,
+                "final stack": [
+                    "05"
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_MIN success (empty and 01)",
+                "initial stack": [
+                    "",
+                    "01"
+                ],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_MIN success (empty and empty)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_MIN success (normalizes selected result)",
+                "initial stack": [
+                    "020000",
+                    "01"
+                ],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_MIN fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_MIN fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "a3"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_MAX tests",
+        "tests": [
+            {
+                "name": "OP_MAX success (1 vs 2)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": true,
+                "final stack": [
+                    "02"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_MAX success (3 vs 2)",
+                "initial stack": [
+                    "03",
+                    "02"
+                ],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": true,
+                "final stack": [
+                    "03"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_MAX success (equal values)",
+                "initial stack": [
+                    "050000",
+                    "05"
+                ],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": true,
+                "final stack": [
+                    "05"
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_MAX success (empty and 01)",
+                "initial stack": [
+                    "",
+                    "01"
+                ],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_MAX success (empty and empty)",
+                "initial stack": [
+                    "",
+                    ""
+                ],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_MAX success (normalizes selected result)",
+                "initial stack": [
+                    "01",
+                    "020000"
+                ],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": true,
+                "final stack": [
+                    "02"
+                ],
+                "varops cost": 3
+            },
+            {
+                "name": "OP_MAX fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_MAX fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "a4"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_WITHIN tests",
+        "tests": [
+            {
+                "name": "OP_WITHIN success (2 in [1, 3))",
+                "initial stack": [
+                    "02",
+                    "01",
+                    "03"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_WITHIN success (1 in [1, 3))",
+                "initial stack": [
+                    "01",
+                    "01",
+                    "03"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_WITHIN success (3 not in [1, 3))",
+                "initial stack": [
+                    "03",
+                    "01",
+                    "03"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 2
+            },
+            {
+                "name": "OP_WITHIN success (0 not in [1, 3))",
+                "initial stack": [
+                    "00",
+                    "01",
+                    "03"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": true,
+                "final stack": [
+                    ""
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_WITHIN success (trailing zeros ignored)",
+                "initial stack": [
+                    "01",
+                    "01000000",
+                    "0300"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 6
+            },
+            {
+                "name": "OP_WITHIN success (empty values treated as 0)",
+                "initial stack": [
+                    "",
+                    "",
+                    "01"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": true,
+                "final stack": [
+                    "01"
+                ],
+                "varops cost": 1
+            },
+            {
+                "name": "OP_WITHIN fail (only two items)",
+                "initial stack": [
+                    "01",
+                    "02"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_WITHIN fail (only one item)",
+                "initial stack": [
+                    "01"
+                ],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": false
+            },
+            {
+                "name": "OP_WITHIN fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "a5"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_SHA256 tests",
+        "tests": [
+            {
+                "name": "OP_SHA256 success (empty string)",
+                "initial stack": [
+                    ""
+                ],
+                "opcodes": [
+                    "a8"
+                ],
+                "success": true,
+                "final stack": [
+                    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_SHA256 success (short string)",
+                "initial stack": [
+                    "61"
+                ],
+                "opcodes": [
+                    "a8"
+                ],
+                "success": true,
+                "final stack": [
+                    "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb"
+                ],
+                "varops cost": 10
+            },
+            {
+                "name": "OP_SHA256 success (long input)",
+                "initial stack": [
+                  "ff{4000000}"
+                ],
+                "opcodes": [
+                  "a8"
+                ],
+                "success": true,
+                "final stack": [
+                  "1627b4013371d63d947eb27740be7cf32aad311c0116e854bbe6ec89e7185e09"
+                ],
+                "varops cost": 40000000
+            },
+            {
+                "name": "OP_SHA256 fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "a8"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_HASH160 tests",
+        "tests": [
+            {
+                "name": "OP_HASH160 success (empty string)",
+                "initial stack": [
+                    ""
+                ],
+                "opcodes": [
+                    "a9"
+                ],
+                "success": true,
+                "final stack": [
+                    "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb"
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_HASH160 success (short string)",
+                "initial stack": [
+                    "61"
+                ],
+                "opcodes": [
+                    "a9"
+                ],
+                "success": true,
+                "final stack": [
+                    "994355199e516ff76c4fa4aab39337b9d84cf12b"
+                ],
+                "varops cost": 10
+            },
+            {
+                "name": "OP_HASH160 success (long input)",
+                "initial stack": [
+                  "ff{4000000}"
+                ],
+                "opcodes": [
+                  "a9"
+                ],
+                "success": true,
+                "final stack": [
+                  "3eb2aeb1e4836781864294138e5592505ca08d70"
+                ],
+                "varops cost": 40000000
+            },
+            {
+                "name": "OP_HASH160 fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "a9"
+                ],
+                "success": false
+            }
+        ]
+    },
+    {
+        "category": "OP_HASH256 tests",
+        "tests": [
+            {
+                "name": "OP_HASH256 success (empty string)",
+                "initial stack": [
+                    ""
+                ],
+                "opcodes": [
+                    "aa"
+                ],
+                "success": true,
+                "final stack": [
+                    "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456"
+                ],
+                "varops cost": 0
+            },
+            {
+                "name": "OP_HASH256 success (short string)",
+                "initial stack": [
+                    "61"
+                ],
+                "opcodes": [
+                    "aa"
+                ],
+                "success": true,
+                "final stack": [
+                    "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8"
+                ],
+                "varops cost": 10
+            },
+            {
+                "name": "OP_HASH256 success (long input)",
+                "initial stack": [
+                  "ff{4000000}"
+                ],
+                "opcodes": [
+                  "aa"
+                ],
+                "success": true,
+                "final stack": [
+                  "2c410c77ea4a4d13d84cdd813370d9ab4fd9dcdc5397b40b5531e792d4ad504e"
+                ],
+                "varops cost": 40000000
+            },
+            {
+                "name": "OP_HASH256 fail (empty stack)",
+                "initial stack": [],
+                "opcodes": [
+                    "aa"
+                ],
+                "success": false
+            }
+        ]
+    }
 ]

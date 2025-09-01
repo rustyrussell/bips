@@ -253,11 +253,11 @@ A reasonable implementation (and the current bitcoind C++ implementation) is to 
 ! Varops Budget Cost
 |-
 |OP_BOOLAND
-|length(A) + length(B)
+|length(A) + length(B) (length(A) if a is false)
 |COMPARINGZERO
 |-
 |OP_BOOLOR
-|length(A) + length(B)
+|length(A) + length(B) (length(A) if a is true)
 |COMPARINGZERO
 |-
 |OP_NUMEQUAL
