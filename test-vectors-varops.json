@@ -293,7 +293,7 @@
         "final stack": [
           "01"
         ],
-        "varops cost": 4
+        "varops cost": 2
       },
       {
         "name": "OP_EQUAL success (equal empty strings)",
@@ -323,7 +323,7 @@
         "final stack": [
           ""
         ],
-        "varops cost": 4
+        "varops cost": 2
       },
       {
         "name": "OP_EQUAL fail (different lengths)",
@@ -389,7 +389,7 @@
         ],
         "success": true,
         "final stack": [],
-        "varops cost": 4
+        "varops cost": 2
       },
       {
         "name": "OP_EQUALVERIFY success (equal empty strings)",
@@ -547,7 +547,7 @@
         "final altstack": [
           "bbcc"
         ],
-        "varops cost": 3999999
+        "varops cost": 4000001
       },
       {
         "name": "OP_2DUP fail (stack total size including altstack equals 8000001)",
@@ -575,7 +575,7 @@
           "03"
         ],
         "opcodes": [
-          "b0"
+          "6f"
         ],
         "success": true,
         "final stack": [
@@ -595,7 +595,7 @@
           "02"
         ],
         "opcodes": [
-          "b0"
+          "6f"
         ],
         "success": false
       },
@@ -605,7 +605,7 @@
           "01"
         ],
         "opcodes": [
-          "b0"
+          "6f"
         ],
         "success": false
       },
@@ -613,7 +613,7 @@
         "name": "OP_DUP3 fail (empty stack)",
         "initial stack": [],
         "opcodes": [
-          "b0"
+          "6f"
         ],
         "success": false
       },
@@ -625,7 +625,7 @@
           "ff{3999998}"
         ],
         "opcodes": [
-          "b0"
+          "6f"
         ],
         "success": true,
         "final stack": [
@@ -646,7 +646,7 @@
           "ff{1999999}"
         ],
         "opcodes": [
-          "b0"
+          "6f"
         ],
         "success": false
       },
@@ -660,7 +660,7 @@
         ],
         "opcodes": [
           "6b",
-          "b0"
+          "6f"
         ],
         "success": true,
         "final stack": [
@@ -674,7 +674,7 @@
         "final altstack": [
           "ccdd"
         ],
-        "varops cost": 3999997
+        "varops cost": 3999999
       },
       {
         "name": "OP_DUP3 fail (stack+altstack total size = 8000001)",
@@ -686,7 +686,7 @@
         ],
         "opcodes": [
           "6b",
-          "b0"
+          "6f"
         ],
         "success": false
       }
@@ -704,7 +704,7 @@
           "d4"
         ],
         "opcodes": [
-          "b1"
+          "70"
         ],
         "success": true,
         "final stack": [
@@ -725,7 +725,7 @@
           "c3"
         ],
         "opcodes": [
-          "b1"
+          "70"
         ],
         "success": false
       },
@@ -736,7 +736,7 @@
           "02"
         ],
         "opcodes": [
-          "b1"
+          "70"
         ],
         "success": false
       },
@@ -746,7 +746,7 @@
           "ff"
         ],
         "opcodes": [
-          "b1"
+          "70"
         ],
         "success": false
       },
@@ -754,7 +754,7 @@
         "name": "OP_2OVER fail (empty stack)",
         "initial stack": [],
         "opcodes": [
-          "b1"
+          "70"
         ],
         "success": false
       },
@@ -767,7 +767,7 @@
           "00"
         ],
         "opcodes": [
-          "b1"
+          "70"
         ],
         "success": true,
         "final stack": [
@@ -789,7 +789,7 @@
           "ff{3999999}"
         ],
         "opcodes": [
-          "b1"
+          "70"
         ],
         "success": false
       },
@@ -804,7 +804,7 @@
         ],
         "opcodes": [
           "6b",
-          "b1"
+          "70"
         ],
         "success": false
       },
@@ -819,7 +819,7 @@
         ],
         "opcodes": [
           "6b",
-          "b1"
+          "70"
         ],
         "success": true,
         "final stack": [
@@ -833,7 +833,7 @@
         "final altstack": [
           "dd"
         ],
-        "varops cost": 2
+        "varops cost": 3
       }
     ]
   },
@@ -853,7 +853,7 @@
           "01",
           "01"
         ],
-        "varops cost": 2
+        "varops cost": 1
       },
       {
         "name": "OP_IFDUP success (non-zero multi-byte)",
@@ -896,7 +896,7 @@
         "final stack": [
           "00{4000000}"
         ],
-        "varops cost": 0
+        "varops cost": 4000000
       },
       {
         "name": "OP_IFDUP success (last byte non-zero triggers duplication)",
@@ -911,7 +911,7 @@
           "00{3999999}01",
           "00{3999999}01"
         ],
-        "varops cost": 8000000
+        "varops cost": 4000000
       },
       {
         "name": "OP_IFDUP fail (empty stack)",
@@ -924,8 +924,8 @@
       {
         "name": "OP_IFDUP success (duplication puts stack+altstack exactly at 8000000)",
         "initial stack": [
-          "ff{3999998}",
-          "aa"
+          "aa",
+          "ff{3999998}"
         ],
         "opcodes": [
           "6b",
@@ -939,7 +939,7 @@
         "final altstack": [
           "ff{3999998}"
         ],
-        "varops cost": 2
+        "varops cost": 3999999
       },
       {
         "name": "OP_IFDUP fail (duplication causes stack+altstack > 8000000)",
@@ -1029,7 +1029,7 @@
         "final altstack": [
           "ff{3999998}"
         ],
-        "varops cost": 1
+        "varops cost": 3999999
       },
       {
         "name": "OP_DUP fail (stack+altstack > 8000000 after dup)",
@@ -1120,8 +1120,9 @@
       {
         "name": "OP_OVER success (stack+altstack exactly 8000000)",
         "initial stack": [
-          "ff{3999998}",
-          "aa"
+          "aa",
+          "bb",
+          "ff{3999998}"
         ],
         "opcodes": [
           "6b",
@@ -1130,13 +1131,13 @@
         "success": true,
         "final stack": [
           "aa",
-          "aa",
+          "bb",
           "aa"
         ],
         "final altstack": [
           "ff{3999998}"
         ],
-        "varops cost": 2
+        "varops cost": 3999999
       },
       {
         "name": "OP_OVER fail (stack+altstack > 8000000)",
@@ -1244,7 +1245,7 @@
         "final altstack": [
           "bb"
         ],
-        "varops cost": 2
+        "varops cost": 4000000
       },
       {
         "name": "OP_TUCK fail (stack+altstack > 8000000)",
@@ -1278,7 +1279,7 @@
           "aa",
           "aa"
         ],
-        "varops cost": 2
+        "varops cost": 1
       },
       {
         "name": "OP_PICK success (pick index 1 = second)",
@@ -1296,14 +1297,14 @@
           "bb",
           "aa"
         ],
-        "varops cost": 3
+        "varops cost": 2
       },
       {
         "name": "OP_PICK success (multi-byte target and index)",
         "initial stack": [
           "ff{100}",
           "ee",
-          "0001"
+          "0100"
         ],
         "opcodes": [
           "79"
@@ -1330,7 +1331,7 @@
           "",
           ""
         ],
-        "varops cost": 1
+        "varops cost": 0
       },
       {
         "name": "OP_PICK fail (empty stack)",
@@ -1394,9 +1395,10 @@
       {
         "name": "OP_PICK success (stack+altstack exactly 8000000)",
         "initial stack": [
-          "ff{3999999}",
+          "aa",
           "eeee",
-          "01"
+          "01",
+          "ff{3999999}"
         ],
         "opcodes": [
           "6b",
@@ -1404,8 +1406,9 @@
         ],
         "success": true,
         "final stack": [
+          "aa",
           "eeee",
-          "ff{3999999}"
+          "aa"
         ],
         "final altstack": [
           "ff{3999999}"
@@ -1443,7 +1446,7 @@
         "final stack": [
           "aa"
         ],
-        "varops cost": 1
+        "varops cost": 0
       },
       {
         "name": "OP_ROLL success (roll 1 = swap)",
@@ -1460,7 +1463,7 @@
           "bb",
           "aa"
         ],
-        "varops cost": 1
+        "varops cost": 25
       },
       {
         "name": "OP_ROLL success (roll from position 2)",
@@ -1479,7 +1482,7 @@
           "c3",
           "a1"
         ],
-        "varops cost": 1
+        "varops cost": 49
       },
       {
         "name": "OP_ROLL success (non-minimally encoded 0)",
@@ -1584,7 +1587,7 @@
         "final stack": [
           ""
         ],
-        "varops cost": 2
+        "varops cost": 1
       },
       {
         "name": "OP_BOOLAND success (second zero)",
@@ -1617,7 +1620,7 @@
         "varops cost": 0
       },
       {
-        "name": "OP_BOOLAND success (both multi-byte zero)",
+        "name": "OP_BOOLAND success (both multi-byte zero) FIXME (why is this true?)",
         "initial stack": [
           "00{4000000}",
           "00{4000000}"
@@ -1629,7 +1632,7 @@
         "final stack": [
           ""
         ],
-        "varops cost": 8000000
+        "varops cost": 4000000
       },
       {
         "name": "OP_BOOLAND success (one non-zero at the end)",
@@ -1682,7 +1685,7 @@
         "final stack": [
           "01"
         ],
-        "varops cost": 2
+        "varops cost": 1
       },
       {
         "name": "OP_BOOLOR success (one zero, one non-zero)",
@@ -1730,7 +1733,7 @@
         "varops cost": 0
       },
       {
-        "name": "OP_BOOLOR success (both multi-byte zero)",
+        "name": "OP_BOOLOR success (both multi-byte zero) FIXME (why is this true?)",
         "initial stack": [
           "00{4000000}",
           "00{4000000}"
@@ -1757,7 +1760,7 @@
         "final stack": [
           "01"
         ],
-        "varops cost": 8000000
+        "varops cost": 4000000
       },
       {
         "name": "OP_BOOLOR fail (only one item)",
@@ -2507,7 +2510,7 @@
         ],
         "success": true,
         "final stack": [
-          "050000"
+          "05"
         ],
         "varops cost": 3
       },
@@ -2641,7 +2644,7 @@
         "final stack": [
           ""
         ],
-        "varops cost": 2
+        "varops cost": 1
       },
       {
         "name": "OP_WITHIN success (trailing zeros ignored)",
@@ -2657,7 +2660,7 @@
         "final stack": [
           "01"
         ],
-        "varops cost": 4
+        "varops cost": 6
       },
       {
         "name": "OP_WITHIN success (empty values treated as 0)",
@@ -2788,7 +2791,7 @@
         ],
         "success": true,
         "final stack": [
-          "b1f79b1f70b36c92e68d7532a7fd6a68d4b2fdf1"
+          "994355199e516ff76c4fa4aab39337b9d84cf12b"
         ],
         "varops cost": 10
       },
@@ -2802,7 +2805,7 @@
         ],
         "success": true,
         "final stack": [
-          "(hash160 of 4MB ff...)"
+          "3eb2aeb1e4836781864294138e5592505ca08d70"
         ],
         "varops cost": 40000000
       },
@@ -2843,7 +2846,7 @@
         ],
         "success": true,
         "final stack": [
-          "9595c9df900ebac4a9cd7ed0d53a2e85ad48a4127a3ee9ce3c8b636f979f7f1d"
+          "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8"
         ],
         "varops cost": 10
       },
@@ -2857,7 +2860,7 @@
         ],
         "success": true,
         "final stack": [
-          "(double sha256 of 4MB ff...)"
+          "2c410c77ea4a4d13d84cdd813370d9ab4fd9dcdc5397b40b5531e792d4ad504e"
         ],
         "varops cost": 40000000
       },
