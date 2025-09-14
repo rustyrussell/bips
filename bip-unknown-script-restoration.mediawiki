@@ -51,7 +51,7 @@ There needs to be some limit on memory usage, to avoid a memory-based denial of 
 
 Putting the entire transaction on the stack is a foreseeable use case, hence using the block size (4MB) as a limit makes sense.  However, allowing 4MB stack elements is a significant increase in memory requirements, so a total limit of twice that many bytes (8MB) is introduced.  Many stack operations require making at least one copy, so this allows such use.
 
-Putting all outputs or inputs from the transaction on the stack as separate elements requires as much stack capacity as there are inputs or outputs.  The smallest possible input is 34 bytes (allowing almost 26411 inputs), and the smallest possible output is 9 bytes (allowing almsot 111111 inputs).  However, empty outputs are rare and not economically interesting.  Thus we consider smallest non-OP_RETURN standard output script, which is P2WPKH at 22 bytes, giving a minimum output size of 31 bytes, allowing 32258 outputs in a maximally-sized transaction.
+Putting all outputs or inputs from the transaction on the stack as separate elements requires as much stack capacity as there are inputs or outputs.  The smallest possible input is 34 bytes (allowing almost 26411 inputs), and the smallest possible output is 9 bytes (allowing almost 111111 inputs).  However, empty outputs are rare and not economically interesting.  Thus we consider smallest non-OP_RETURN standard output script, which is P2WPKH at 22 bytes, giving a minimum output size of 31 bytes, allowing 32258 outputs in a maximally-sized transaction.
 
 This makes 32768 a reasonable upper limit for stack elements.
 
@@ -61,7 +61,7 @@ The following opcodes are renamed OP_SUCCESSx, and cause validation to immediate
 
 * OP_1NEGATE = OP_SUCCESS79
 * OP_NEGATE = OP_SUCCESS143
-* OP_ABS = OP_SUCCESS144
+* OP_ABS = OP_SUCCESS144<ref>Anthony Towns suggested this could become an opcode which normalized the value on the top of the stack by truncating any trailing zeroes.</ref>
 
 ====Rationale====
 
@@ -85,9 +85,15 @@ These opcodes are redefined in v2 Tapscript to write numbers to the stack as min
 2. OP_DEPTH
 3. OP_SIZE
 
-In addition, the success requirement in BIP-342 is modified to require a non-zero variable-length unsigned integer value (not <code>CastToBool()</code>):
+In addition, the [[bip-0342.mediawiki#specification|BIP-342 success requirement]] is modified to require a non-zero variable-length unsigned integer value (not <code>CastToBool()</code>):
 
-# If the execution results in anything but exactly one element on the stack which contains one or more non-zero bytes, fail.
+Previously:
+
+    ## If the execution results in anything but exactly one element on the stack which evaluates to true with <code>CastToBool()</code>, fail.
+
+Now:
+
+    ## If the execution results in anything but exactly one element on the stack which contains one or more non-zero bytes, fail.
 
 ===Enabled Opcodes===
 
@@ -221,7 +227,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 
 =====Rationale=====
 
-OP_AND, OP_OR and OP_XOR are assumed to fold the results into the longer of the two operands.  This is an OTHER operation (i.e. cost is 2 per byte), but OP_AND needs to do this until one operand is exhausted, and then zero the rest (ZEROING, cost 1 per byte).   OP_OR and OP_XOR can stop at as soon as the shorter operand is exhausted.
+OP_AND, OP_OR and OP_XOR are assumed to fold the results into the longer of the two operands.  This is an OTHER operation (i.e. cost is 2 per byte), but OP_AND needs to do this until one operand is exhausted, and then zero the rest (ZEROING, cost 1 per byte).   OP_OR and OP_XOR can stop as soon as the shorter operand is exhausted.
 
 ====Bitshift Opcodes====
 
@@ -256,19 +262,19 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
-# For OFF from value(BITS) / 8 to length(A)-1:
-    # Copy each byte from OFF, shifting by (BITS mod 8), to BITS / 8 bytes earlier in A.
+# For BITOFF from 0 to (length(A)-1) * 8 - value(BITS):
+    # Copy each bit in A from BITOFF + value(BITS) to BITOFF.
 # Truncate A to remove value(OFF) bytes (or all, if value(OFF) > length(A)).
 # Push A onto the stack.
 |}
 
 =====Rationale=====
 
-DOWNSHIFT needs to read the value of the second operand BITS.  It then needs to move the remainder of A (the part after offset BITS/8 bytes).
+DOWNSHIFT needs to read the value of the second operand BITS.  It then needs to move the remainder of A (the part after offset BITS/8 bytes).  In practice this should be implemented in word-size chunks, not bit-by-bit!
 
 UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying A and zeroing out remaining words).  If not moving an exact number of bytes (BITS % 8 != 0), another pass is needed to perform the bitshift.
 
-OP_UPSHIFT can produce huge results, and so must be checked for limits prior to evaluation.  It is also carefully defined to avoid reallocating twice (reallocating to prepend bytes, then again to append a single byte) which has the practical advantage of being about to share the same downward bitshift routine as OP_DOWNSHIFT.
+OP_UPSHIFT can produce huge results, and so must be checked for limits prior to evaluation.  It is also carefully defined to avoid reallocating twice (reallocating to prepend bytes, then again to append a single byte) which has the practical advantage of being able to share the same downward bitshift routine as OP_DOWNSHIFT.
 
 ====Multiply and Divide Opcodes===
 
@@ -352,11 +358,7 @@ The detailed rationale for these costs can be found in Appendix A.
 
 ===Limited Hashing Opcodes===
 
-OP_RIPEMD160 and OP_SHA1 are now defined to FAIL validation if their operands exceed 520 bytes.
-
-====Rationale====
-
-There seems little reason to allow large hashing with SHA1 and RIPEMD, and they are not as optimized as SHA256, so we restrict their usage to the older byte limit.
+OP_RIPEMD160 and OP_SHA1 are now defined to FAIL validation if their operands exceed 520 bytes.<ref>There seems little reason to allow large hashing with SHA1 and RIPEMD, and they are not as optimized as SHA256, so we restrict their usage to the older byte limit.</ref>
 
 ===Extended Opcodes===
 
@@ -517,7 +519,7 @@ Note: we do not assume Karatsuba, Tom-Cooke or other optimizations.
 
 This results in a cost of: length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 6.
 
-This is slight asymmetric: in practice an implementation usually finds that CPU pipelining means choosing B as the larger operand is optimal.
+This is slightly asymmetric: in practice an implementation usually finds that CPU pipelining means choosing B as the larger operand is optimal.
 
 ===Division Cost====
 
@@ -547,6 +549,6 @@ Note that the loop at step 6 shrinks A every time, so the *average* cost of each
 
 	(length(A) - NormalizedLength(B)) / 8 * (NormalizedLength(B) * 3 + length(A) * 6) / 2
 
-The worst case here if is NormalizedLength(B) is 0: length(A) * length(A) / 3.
+The worst case here is when NormalizedLength(B) is 0: length(A) * length(A) / 3.
 
-The cost for the all the steps in either case is: length(A) * 9 + length(B) * 2 + length(A) * length(A) / 3.
+The cost for all the steps in either case is: length(A) * 9 + length(B) * 2 + length(A) * length(A) / 3.

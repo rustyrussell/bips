@@ -1,7 +1,7 @@
 <pre>
   BIP: ?
   Layer: Consensus (soft fork)
-  Title: New Opcodes for Taproot v2
+  Title: New Opcodes for Tapscript v2
   Author: Rusty Russell <rusty@rustcorp.com.au>
   Comments-URI: TBA
   Status: Draft
@@ -68,3 +68,8 @@ None as yet.
 - If we do want OP_INTERNALKEY, it should probably be a OP_TX selector bit.
 - Is OP_MULTI too ambitious?  I previously considered for-each-input and for-each-output iterators, but this is far simpler.
 - Can we come up with a better name for OP_CHECKSIGFROMSTACK?  Unfortunately OP_CHECKSIG is taken, but OP_THE_REAL_CHECKSIG isn't!
+
+
+== Footnotes ==
+
+<references />

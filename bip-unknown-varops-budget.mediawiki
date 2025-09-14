@@ -47,23 +47,23 @@ The last two assumptions make a large difference in practice: normal usage on sm
 
 ==Design==
 
-A per-transaction integer "varops budget" is determined by multiplying the total transaction weight by the fixed factor 5,200 (chosen to make operation costs all integer values).  The budget is transaction-wide (rather than per-input) to allow for cross-input introspection: a small input may reasonably access larger inputs.
+A per-transaction integer "varops budget" is determined by multiplying the total transaction weight by the fixed factor 5,200<ref>As the most expensive non-signature operation (SHA256 hashing) is 10 varops per byte, and the largest previously-allowed stack element size is 520, it is trivial to demonstrate that no non-signature operation previously allows can violate the varops budget, as the weight of the opcode itself provides 5200 budget).</ref>.  The budget is transaction-wide (rather than per-input) to allow for cross-input introspection: a small input may reasonably access larger inputs.
 
 Opcodes consume budget as they are executed, based on the length (not generally the value) of their parameters as detailed below.  A transaction which exceeds its budget fails to validate.
 
 ===Derivation of Costs===
 
-The costs of opcodes were determined by benchmarking on a variety of platforms.
+The costs of opcodes were determined by benchmarking on a variety of platforms.  
 
 As each block can contain 80,000 Schnorr signature checks, we used this as a reasonable upper bound for maximally slow block processing.
 
 To estimate a conservative maximum runtime for each opcode, we consider scripts with two constraints:
-1. thescript size is limited by the existing weight limit of 4,000,000 units and
-2. the script can only consume the varops budget of a whole block: 5,200 * 4,000,000 (~21b).
+# thescript size is limited by the existing weight limit of 4,000,000 units and
+# the script can only consume the varops budget of a whole block: 5,200 * 4,000,000 (~21b).
 
 The script is assumed to execute in a single thread and acts on initial stack elements that are not included in the limits for conservatism.
 
-Ideally, on each platform we tested, the worst case time for each opcode would be no worse than the Schnorr signature upper bound: i.e. the block would get no slower.  And while CHECKSIG can be done in parallel, it also involves hashing, which is not taken into account here (the worst-case being significantly slower than the signature validations themselves).
+Ideally, on each platform we tested, the worst case time for each opcode would be no worse than the Schnorr signature upper bound: i.e. the block would get no slower.  And while CHECKSIG can be batched and/or done in parallel, it also involves hashing, which is not taken into account here (the worst-case being significantly slower than the signature validations themselves).
 
 The signature cost is simply carried across from the existing [[bip-0342.mediawiki||BIP-342]] limit: 50 weight units allows you one signature.  Since each transaction gets varops budget for the entire transaction (not just the current input's witness), and each input has at least 40 bytes (160 weight), this is actually slightly more generous than the sigops budget (which was 50 + witness weight), but still limits the entire block to 80,000 signatures.
 
@@ -112,19 +112,19 @@ We are looking for more benchmarks, so please contribute with your machine by ch
 
 We divided operations into five speed categories:
 
-1. Signature operations. 
-2. SHA256 operations.
-3. OP_ROLL, which does a large-scale stack movement.
-4. Fast operations: comparing bytes, comparing bytes against zero, copying bytes and zeroing bytes.  Empirically, these have been shown to be well-optimized.
-5. Everything else.
+# Signature operations. 
+# SHA256 operations.
+# OP_ROLL, which does a large-scale stack movement.
+# Fast operations: comparing bytes, comparing bytes against zero, copying bytes and zeroing bytes.  Empirically, these have been shown to be well-optimized.
+# Everything else.
 
 Each class then has the following costs.
 
-1. Signature operations cost 260,000 (5,200 * 50) units each.
-2. Hashing costs 10 units per byte hashed.
-3. OP_ROLL costs an additional 24 units per stack entry moved (i.e. the value of its operand).
-4. Fast operations cost 1 unit per byte output.
-5. Other operations cost 2 units per byte output.
+# Signature operations cost 260,000 (5,200 * 50) units each.
+# Hashing costs 10 units per byte hashed.
+# OP_ROLL costs an additional 24 units per stack entry moved (i.e. the value of its operand).
+# Fast operations cost 1 unit per byte output.
+# Other operations cost 2 units per byte output.
 
 ===Variable Opcode Budget===
 
@@ -348,3 +348,7 @@ In alphabetical order:
 - Rijndael
 - Steven Roose
 - FIXME: your name here!
+
+== Footnotes ==
+
+<references />
