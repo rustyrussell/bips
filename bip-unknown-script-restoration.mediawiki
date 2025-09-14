@@ -151,12 +151,12 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 |OP_RIGHT
 |129
 |2
-|length(OFFSET) + MAX(length(A) - value of OFFSET, 0)
+|length(OFFSET) + value of OFFSET
 |LENGTHCONV + COPYING
 |
 # Pop OFFSET off the stack.
 # Pop A off the stack.
-# Remove value(OFFSET) bytes from the front of A, or all bytes if value(OFFSET) is greater than the length(A).
+# Copy value(OFFSET) bytes from offset length(A) - value(OFFSET) to offset 0, if value(OFFSET) is less than length(A).
 # Push A onto the stack.
 |}
 
@@ -166,7 +166,7 @@ OP_CAT may require a reallocation of A (hence, COPYING A) before appending B.
 
 OP_SUBSTR may have to copy LEN bytes, but also needs to read its two numeric operands.  LEN is limited to the length of the operand minus BEGIN.
 
-OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_RIGHT must copy the number of remaining bytes, which depends on the operand length.
+OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_RIGHT must copy the bytes, which depends on the OFFSET value.
 
 ====Bit Operation Opcodes====
 
