@@ -289,12 +289,12 @@ A reasonable implementation (and the current bitcoind C++ implementation) is to 
 |COMPARING + COMPARINGZERO
 |-
 |OP_MIN
-|MAX(length(A), length(B))
-|COMPARING + COMPARINGZERO
+|MAX(length(A), length(B)) * 2
+|OTHER
 |-
 |OP_MAX
-|MAX(length(A), length(B))
-|COMPARING + COMPARINGZERO
+|MAX(length(A), length(B)) * 2
+|OTHER
 |-
 |OP_WITHIN
 |MAX(length(C), length(B)) + MAX(length(C), length(A))
@@ -304,6 +304,8 @@ A reasonable implementation (and the current bitcoind C++ implementation) is to 
 ====Rationale====
 
 Numerical comparison in little-endian numbers involves a byte-by-byte comparison, then if one is longer, checking that the remainder is all zero bytes.
+
+However, OP_MAX and OP_MIN also normalize their result, which means they can't use the optimized comparison routine but must instead track the final non-zero byte to perform truncation.
 
 ===Example: Hash Operators===
 
