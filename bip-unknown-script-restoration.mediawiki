@@ -493,6 +493,24 @@ The varops costs of the following opcodes are defined in [[bip-unknown-varops-bu
 
 Those with costs not defined here have a cost of 0 (they do not operate on variable-length stack objects).
 
+===Normalization of Results===
+
+Note that only arithmetic operations (those which treat operands as numbers) normalize their results: bit operations do not.  Thus operations such as "0 OP_ADD" and "2 OP_MUL" will never result in a top stack entry with a trailing zero byte, but "0 OP_OR" and "1 OP_UPSHIFT" may.
+
+To be clear, the following operations are arithmetic and will normalize their results:
+
+* OP_1ADD
+* OP_1SUB
+* OP_2MUL
+* OP_2DIV
+* OP_ADD
+* OP_SUB
+* OP_MUL
+* OP_DIV
+* OP_MOD
+* OP_MIN
+* OP_MAX
+
 ==Backwards compatibility==
 
 This BIP defines a previous unused (and thus, always-successful) tapscript version, for backwards compatibility.
