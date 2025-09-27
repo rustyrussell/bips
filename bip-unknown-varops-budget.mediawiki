@@ -337,7 +337,7 @@ A model for other hash operations (OP_SHA1, OP_RIPEMD160) is possible, but we ha
 
 Work in progress:
 
-	https://github.com/jmoik/bitcoin/tree/varops
+	https://github.com/jmoik/bitcoin/tree/gsr
 
 ==Thanks==
 

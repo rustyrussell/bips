@@ -519,7 +519,7 @@ This BIP defines a previous unused (and thus, always-successful) tapscript versi
 
 Work in progress:
 
-	https://github.com/jmoik/bitcoin/tree/varops
+	https://github.com/jmoik/bitcoin/tree/gsr
 
 ==Appendix A: Cost Model Calculations for Multiply and Divide==
 
