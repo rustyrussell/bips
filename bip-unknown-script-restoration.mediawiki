@@ -521,6 +521,19 @@ Work in progress:
 
 	https://github.com/jmoik/bitcoin/tree/gsr
 
+==Thanks==
+
+This BIP would not exist without the thoughtful contributions of coders who considered all the facets carefully and thoroughly, and also my inspirational wife Alex and my kids who have been tirelessly supportive of my esoteric-seeming endeavors such as this!
+
+In alphabetical order:
+- Anthony Towns
+- Brandon Black (aka Reardencode)
+- John Light
+- Jonas Nick
+- Rijndael (aka rot13maxi)
+- Steven Roose
+- FIXME: your name here!
+
 ==Appendix A: Cost Model Calculations for Multiply and Divide==
 
 Multiplication and division require multiple passes over the operands, meaning a cost proportional to the square of the lengths involved, and the word size used for that iteration makes a difference.  We assume 8 bytes (64 bits) at a time are evaluated, and the ability to multiply two 64-bit numbers and receive a 128-bit result, and divide a 128-bit number by a 64 bit number to receive a 128 bit quotient and remainder.  This is true on modern 64-bit CPUs (sometimes using multiple instructions).

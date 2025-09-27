@@ -344,8 +344,11 @@ Work in progress:
 This BIP would not exist without the thoughtful contributions of coders who considered all the facets carefully and thoroughly, and also my inspirational wife Alex and my kids who have been tirelessly supportive of my esoteric-seeming endeavors such as this!
 
 In alphabetical order:
+- Anthony Towns
 - Brandon Black (aka Reardencode)
-- Rijndael
+- John Light
+- Jonas Nick
+- Rijndael (aka rot13maxi)
 - Steven Roose
 - FIXME: your name here!
 
