@@ -15,7 +15,7 @@
 
 ===Abstract===
 
-This new BIP introduces a new tapleaf version (0xc2) which restores Bitcoin script to its pre-0.3.1 capability, relying on the Varops Budget in [[bip-unknown-varops-budget.mediawiki|BIP-varops]] to prevent the excessive computational time which caused CVE-2010-5137.
+This BIP introduces a new tapleaf version (0xc2) which restores Bitcoin script to its pre-0.3.1 capability, relying on the Varops Budget in [[bip-unknown-varops-budget.mediawiki|BIP-varops]] to prevent the excessive computational time which caused CVE-2010-5137.
 
 In particular, this BIP:
 - Reenables disabled opcodes.
@@ -51,9 +51,9 @@ There needs to be some limit on memory usage, to avoid a memory-based denial of 
 
 Putting the entire transaction on the stack is a foreseeable use case, hence using the block size (4MB) as a limit makes sense.  However, allowing 4MB stack elements is a significant increase in memory requirements, so a total limit of twice that many bytes (8MB) is introduced.  Many stack operations require making at least one copy, so this allows such use.
 
-Putting all outputs or inputs from the transaction on the stack as separate elements requires as much stack capacity as there are inputs or outputs.  The smallest possible input is 34 bytes (allowing almost 26411 inputs), and the smallest possible output is 9 bytes (allowing almost 111111 inputs).  However, empty outputs are rare and not economically interesting.  Thus we consider smallest non-OP_RETURN standard output script, which is P2WPKH at 22 bytes, giving a minimum output size of 31 bytes, allowing 32258 outputs in a maximally-sized transaction.
+Putting all outputs or inputs from the transaction on the stack as separate elements requires as much stack capacity as there are inputs or outputs.  The smallest possible input is 34 bytes (allowing almost 26,411 inputs), and the smallest possible output is 9 bytes (allowing almost 111,111 outputs).  However, empty outputs are rare and not economically interesting.  Thus we consider smallest non-OP_RETURN standard output script, which is P2WPKH at 22 bytes, giving a minimum output size of 31 bytes, allowing 32,258 outputs in a maximally-sized transaction.
 
-This makes 32768 a reasonable upper limit for stack elements.
+This makes 32,768 a reasonable upper limit for stack elements.
 
 ===SUCCESS Opcodes===
 
@@ -97,9 +97,9 @@ Now:
 
 ===Enabled Opcodes===
 
-Fifteen opcodes which were removed in v0.3.1 are re-enabled in v2 Tapscript.
+Fifteen opcodes that were removed in v0.3.1 are re-enabled in v2 Tapscript.
 
-If there are less than the required number of stack elements, these opcodes fail validation.  Equivalently, a requirement to pop off the stack which cannot be satisfied causes the opcode to fail validation.
+If there are fewer than the required number of stack elements, these opcodes fail validation.  Equivalently, a requirement to pop off the stack which cannot be satisfied causes the opcode to fail validation.
 
 See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the annotations in the varops cost field.
 
@@ -116,7 +116,7 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 |OP_CAT
 |126
 |2
-|length(A) + length(B)
+|(length(A) + length(B)) * 3
 |COPYING
 |
 # Pop B off the stack.
@@ -127,20 +127,20 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 |OP_SUBSTR
 |127
 |3
-|length(LEN) + length(BEGIN) + MIN(Value of LEN, length(A) - Value of BEGIN, 0)
+|(length(LEN) + length(BEGIN)) * 2 + MIN(Value of LEN, MAX(length(A) - Value of BEGIN, 0)) * 3
 |LENGTHCONV + COPYING
 |
 # Pop LEN off the stack.
 # Pop BEGIN off the stack.
 # Pop A off the stack.
-# Remove BEGIN bytes from the front of A (all bytes if BEGIN greater than length of A).
+# Remove BEGIN bytes from the front of A (all bytes if BEGIN is greater than length of A).
 # If length(A) is greater than value(LEN), truncate A to length value(LEN).
 # Push A onto the stack.
 |-
 |OP_LEFT
 |128
 |2
-|length(OFFSET)
+|length(OFFSET) * 2
 |LENGTHCONV
 |
 # Pop OFFSET off the stack.
@@ -151,7 +151,7 @@ See [[bip-unknown-varops-budget.mediawiki|BIP-varops]] for the meaning of the an
 |OP_RIGHT
 |129
 |2
-|length(OFFSET) + value of OFFSET
+|length(OFFSET) * 2 + value of OFFSET * 3
 |LENGTHCONV + COPYING
 |
 # Pop OFFSET off the stack.
@@ -181,7 +181,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_INVERT
 |131
 |1
-|length(A) * 2
+|length(A) * 4
 |OTHER
 |
 # Pop A off the stack.
@@ -191,7 +191,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_AND
 |132
 |2
-|length(A) + length(B)
+|(length(A) + length(B)) * 2
 |OTHER + ZEROING
 |
 # Pop B off the stack.
@@ -203,7 +203,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_OR
 |133
 |2
-|MIN(length(A), length(B)) * 2
+|MIN(length(A), length(B)) * 4
 |OTHER
 |
 # Pop B off the stack.
@@ -215,7 +215,7 @@ OP_LEFT only needs to read its OFFSET operand (truncation is free), whereas OP_R
 |OP_XOR
 |134
 |2
-|MIN(length(A), length(B)) * 2
+|MIN(length(A), length(B)) * 4
 |OTHER
 |
 # Pop B off the stack.
@@ -244,7 +244,7 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 |OP_UPSHIFT
 |152
 |2
-|length(BITS) + (Value of BITS) / 8 + length(A).  If BITS % 8 != 0, add length(A) * 2
+|length(BITS) * 2 + (Value of BITS) / 8 * 2 + length(A) * 3.  If BITS % 8 != 0, add length(A) * 4
 |LENGTHCONV + ZEROING + COPYING. If BITS % 8 != 0, + OTHER.
 |
 # Pop BITS off the stack.
@@ -257,14 +257,14 @@ Note that these are raw bitshifts, unlike the sign-preserving arithmetic shifts 
 |OP_DOWNSHIFT
 |153
 |2
-|length(BITS) + MAX((length(A) - (Value of BITS) / 8), 0) * 2
-|LENGTHCONV + OTHER
+|length(BITS) * 2 + MAX((length(A) - (Value of BITS) / 8), 0) * 3
+|LENGTHCONV + COPYING
 |
 # Pop BITS off the stack.
 # Pop A off the stack.
 # For BITOFF from 0 to (length(A)-1) * 8 - value(BITS):
     # Copy each bit in A from BITOFF + value(BITS) to BITOFF.
-# Truncate A to remove value(OFF) bytes (or all, if value(OFF) > length(A)).
+# Truncate A to remove value(BITS) / 8 bytes from the end (or all bytes, if value(BITS) / 8 > length(A)).
 # Push A onto the stack.
 |}
 
@@ -276,7 +276,7 @@ UPSHIFT also needs to read BITS.  In general, it may need to reallocate (copying
 
 OP_UPSHIFT can produce huge results, and so must be checked for limits prior to evaluation.  It is also carefully defined to avoid reallocating twice (reallocating to prepend bytes, then again to append a single byte) which has the practical advantage of being able to share the same downward bitshift routine as OP_DOWNSHIFT.
 
-====Multiply and Divide Opcodes===
+====Multiply and Divide Opcodes====
 
 {|
 ! Opcode
@@ -289,7 +289,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_2MUL
 |141
 |1
-|length(A) * 3
+|length(A) * 7
 |OTHER + COPYING
 |
 # Pop A off the stack.
@@ -301,18 +301,18 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_2DIV
 |142
 |1
-|length(A) * 2
+|length(A) * 4
 |OTHER
 |
 # Pop A off the stack.
 # Shift each byte 1 bit to the right (decreasing values, equivalent to C's >> operator), tracking the last non-zero value.
 # Truncate A at the last non-zero byte.
 # Push A onto the stack.
-|--
+|-
 |OP_MUL
 |149
 |2
-|length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 6  (BEWARE OVERFLOW)
+|(length(A) + length(B)) * 3 + (length(A) + 7) / 8 * length(B) * 27  (BEWARE OVERFLOW)
 |See Appendix
 |
 # Pop B off the stack.
@@ -326,7 +326,7 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_DIV
 |150
 |2
-|length(A) * 9 + length(B) * 2 + length(A)^2 / 3  (BEWARE OVERFLOW)
+|length(A) * 18 + length(B) * 4 + length(A)^2 * 2 / 3  (BEWARE OVERFLOW)
 |See Appendix
 |
 # Pop B off the stack.
@@ -340,9 +340,11 @@ OP_UPSHIFT can produce huge results, and so must be checked for limits prior to 
 |OP_MOD
 |151
 |2
-|length(A) * 9 + length(B) * 2 + length(A)^2 / 3  (BEWARE OVERFLOW)
+|length(A) * 18 + length(B) * 4 + length(A)^2 * 2 / 3  (BEWARE OVERFLOW)
 |See Appendix
 |
+# Pop B off the stack.
+# Pop A off the stack.
 # Calculate the varops cost of the operation: if it exceeds the remaining budget, fail.
 # If B is empty or all zeroes, fail.
 # Perform division as per Knuth's The Art of Computer Programming v2 page 272, Algorithm D "Division of non-negative integers".
@@ -375,7 +377,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_ADD
 |147
 |2
-|MAX(length(A), length(B)) * 4
+|MAX(length(A), length(B)) * 9
 |ARITH + COPYING
 |
 # Pop B off the stack.
@@ -390,7 +392,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_1ADD
 |139
 |1
-|MAX(1, length(A)) * 4
+|MAX(1, length(A)) * 9
 |ARITH + COPYING
 |
 # Pop A off the stack.
@@ -399,19 +401,19 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 |OP_SUB
 |148
 |2
-|MAX(length(A), length(B)) * 3
+|MAX(length(A), length(B)) * 6
 |ARITH
 |
 # Pop B off the stack.
 # Pop A off the stack.
 # For each byte in B, subtract it and previous underflow from the equivalent byte in A, remembering next underflow.
-# If there was final overflow, fail validation.
+# If there was final underflow, fail validation.
 # Remember last non-zero byte written into A, and truncate A after that point.
 |-
 |OP_1SUB
-|140	
+|140
 |1
-|MAX(1, length(A)) * 3
+|MAX(1, length(A)) * 6
 |ARITH
 |
 # Pop A off the stack.
@@ -420,7 +422,7 @@ The opcodes OP_ADD, OP_SUB, OP_1ADD and OP_1SUB are redefined in v2 Tapscript to
 
 ====Rationale====
 
-Note the basic cost for ADD is three times the maximum operand length, but then considers the case where a reallocation and copy needs to occur to append the final carry byte (COPYING, which costs 1 unit per byte).
+Note that the basic cost for ADD is six times the maximum operand length (ARITH), but then considers the case where a reallocation and copy needs to occur to append the final carry byte (COPYING, which costs 3 units per byte).
 
 Subtraction is cheaper because underflow does not occur: that is a validation failure, as mathematicians agree the result would not be natural.
 
@@ -434,23 +436,23 @@ The following opcodes have costs below:
 ! Varops Reason
 |-
 | OP_CHECKLOCKTIMEVERIFY
-| Length of operand
+| Length of operand * 2
 | LENGTHCONV
 |-
 | OP_CHECKSEQUENCEVERIFY
-| Length of operand
+| Length of operand * 2
 | LENGTHCONV
 |-
 | OP_CHECKSIGADD
-| MAX(1, length(number operand)) * 4 + 26000
+| MAX(1, length(number operand)) * 9 + 500,000
 | ARITH + COPYING + SIGCHECK
 |-
 | OP_CHECKSIG
-| 26000
+| 500,000
 | SIGCHECK
 |-
 | OP_CHECKSIGVERIFY
-| 26000
+| 500,000
 | SIGCHECK
 |}
 
@@ -513,7 +515,7 @@ To be clear, the following operations are arithmetic and will normalize their re
 
 ==Backwards compatibility==
 
-This BIP defines a previous unused (and thus, always-successful) tapscript version, for backwards compatibility.
+This BIP defines a previously unused (and thus, always-successful) tapscript version, for backwards compatibility.
 
 ==Reference Implementation==
 
@@ -538,17 +540,19 @@ In alphabetical order:
 
 Multiplication and division require multiple passes over the operands, meaning a cost proportional to the square of the lengths involved, and the word size used for that iteration makes a difference.  We assume 8 bytes (64 bits) at a time are evaluated, and the ability to multiply two 64-bit numbers and receive a 128-bit result, and divide a 128-bit number by a 64 bit number to receive a 128 bit quotient and remainder.  This is true on modern 64-bit CPUs (sometimes using multiple instructions).
 
-===Multiplication Cost====
+===Multiplication Cost===
 
 For multiplication, the steps break down like so:
-1. Allocate and zero the result: cost = length(A) + length(B) (ZEROING)
+1. Allocate and zero the result: cost = (length(A) + length(B)) * 2 (ZEROING)
 2. For each word in A:
-  * Multiply by each word in B, into a scratch vector: cost = 3 * length(B) (ARITH)
-  * Sum scratch vector at the word offset into the result: cost = 3 * length(B) (ARITH)
+  * Multiply by each word in B, into a scratch vector: cost = 6 * length(B) (ARITH)
+  * Sum scratch vector at the word offset into the result: cost = 6 * length(B) (ARITH)
 
-Note: we do not assume Karatsuba, Tom-Cooke or other optimizations.
+Note: we do not assume Karatsuba, Toom-Cook or other optimizations.
 
-This results in a cost of: length(A) + length(B) + (length(A) + 7) / 8 * length(B) * 6.
+The theoretical cost is: (length(A) + length(B)) * 2 + (length(A) + 7) / 8 * length(B) * 12.
+
+However, benchmarking reveals that the inner loop overhead (branch misprediction, cache effects on small elements) is undercosted by the theoretical model.  A 2.25× multiplier on the quadratic term accounts for this, giving a cost of: (length(A) + length(B)) * 3 + (length(A) + 7) / 8 * length(B) * 27.
 
 This is slightly asymmetric: in practice an implementation usually finds that CPU pipelining means choosing B as the larger operand is optimal.
 
@@ -556,30 +560,30 @@ This is slightly asymmetric: in practice an implementation usually finds that CP
 
 For division, the steps break down like so:
 
-1. Bit shift both operands to set top bit of B (OP_UPSHIFT, without overflow for B): cost = length(A) * 3 + length(B) * 2
+1. Bit shift both operands to set top bit of B (OP_UPSHIFT, without overflow for B): cost = length(A) * 6 + length(B) * 4
 
 2. Trim trailing bytes.  This costs according to the number of byte removed, but since that is subtractive on future costs, we ignore it.
 
 3. If B is longer, the answer is 0 already.  So assume A is longer from now on (or equal length).
 
-4. Compare: cost = length(A) (COMPARING)
+4. Compare: cost = length(A) * 2 (COMPARING)
 
-5. Subtract: cost = length(A) * 3 (ARITH)
+5. Subtract: cost = length(A) * 6 (ARITH)
 
 6. for (length(A) - NormalizedLength(B)) in words:
-   1. Multiply word by B -> scratch: cost = NormalizedLength(B) * 3 (ARITH)
-   2. Subtract scratch from A: cost = length(A) * 3 (ARITH)
-   3. Add B into A (no overflow): cost = length(A) * 3 (ARITH)
+   1. Multiply word by B -> scratch: cost = NormalizedLength(B) * 6 (ARITH)
+   2. Subtract scratch from A: cost = length(A) * 6 (ARITH)
+   3. Add B into A (no overflow): cost = length(A) * 6 (ARITH)
    4. Shrink A by 1 word.
 
-7. OP_MOD: shift A down, trim trailing zeros: cost = length(A) * 2
+7. OP_MOD: shift A down, trim trailing zeroes: cost = length(A) * 4
 
-8. OP_DIV: trim trailing zeros: cost = length(A) * 2
+8. OP_DIV: trim trailing zeros: cost = length(A) * 4
 
-Note that the loop at step 6 shrinks A every time, so the *average* cost of each iteration is (NormalizedLength(B) * 3 + length(A) * 6) / 2.  The cost of step 6 is:
+Note that the loop at step 6 shrinks A every time, so the *average* cost of each iteration is (NormalizedLength(B) * 6 + length(A) * 12) / 2.  The cost of step 6 is:
 
-	(length(A) - NormalizedLength(B)) / 8 * (NormalizedLength(B) * 3 + length(A) * 6) / 2
+	(length(A) - NormalizedLength(B)) / 8 * (NormalizedLength(B) * 6 + length(A) * 12) / 2
 
-The worst case here is when NormalizedLength(B) is 0: length(A) * length(A) / 3.
+The worst case is when NormalizedLength(B) is 0: length(A) * length(A) * 2 / 3.
 
-The cost for all the steps in either case is: length(A) * 9 + length(B) * 2 + length(A) * length(A) / 3.
+The cost for all the steps is: length(A) * 18 + length(B) * 4 + length(A) * length(A) * 2 / 3.
