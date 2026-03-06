@@ -2,12 +2,13 @@
   BIP: ?
   Layer: Consensus (soft fork)
   Title: OP_TX
-  Author: Rusty Russell <rusty@rustcorp.com.au>
-  Comments-URI: TBA
+  Authors: Rusty Russell <rusty@rustcorp.com.au>
   Status: Draft
-  Type: Standards Track
-  Created: 2025-06-16
+  Type: Specification
+  Assigned: ?
   License: BSD-3-Clause
+  Discussion: https://groups.google.com/g/bitcoindev/c/GisTcPb8Jco/m/8znWcWwKAQAJ
+  Version: 0.1.0
 </pre>
 
 ==Introduction==

@@ -2,13 +2,14 @@
   BIP: ?
   Layer: Consensus (soft fork)
   Title: Restoration of disabled script functionality (Tapscript v2)
-  Author: Rusty Russell <rusty@rustcorp.com.au>
-          Julian Moik <julianmoik@gmail.com>
-  Comments-URI: TBA
+  Authors: Rusty Russell <rusty@rustcorp.com.au>
+           Julian Moik <julianmoik@gmail.com>
   Status: Draft
-  Type: Standards Track
-  Created: 2025-05-16
+  Type: Specification
+  Assigned: ?
   License: BSD-3-Clause
+  Discussion: https://groups.google.com/g/bitcoindev/c/GisTcPb8Jco/m/8znWcWwKAQAJ
+  Version: 0.1.0
 </pre>
 
 ==Introduction==

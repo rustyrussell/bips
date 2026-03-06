@@ -2,13 +2,15 @@
   BIP: ?
   Layer: Consensus (soft fork)
   Title: Varops Budget For Script Runtime Constraint
-  Author: Rusty Russell <rusty@rustcorp.com.au>
-          Julian Moik <julianmoik@gmail.com>
-  Comments-URI: TBA
+  Authors: Rusty Russell <rusty@rustcorp.com.au>
+           Julian Moik <julianmoik@gmail.com>
   Status: Draft
-  Type: Standards Track
-  Created: 2025-05-15
+  Type: Specification
+  Assigned: ?
   License: BSD-3-Clause
+  Discussion: https://groups.google.com/g/bitcoindev/c/GisTcPb8Jco/m/8znWcWwKAQAJ
+              https://delvingbitcoin.org/t/benchmarking-bitcoin-script-evaluation-for-the-varops-budget-great-script-restoration/2094
+  Version: 0.2.0
 </pre>
 
 ==Introduction==
@@ -323,6 +325,11 @@ A model for other hash operations (OP_SHA1, OP_RIPEMD160) is possible, but we ha
 Work in progress:
 
 	https://github.com/jmoik/bitcoin/tree/gsr
+
+==Changelog==
+
+0.1.0: 2025-09-27: first public posting
+0.2.0: 2025-02-21: increase in cost for hashing and copying based on benchmark results.
 
 ==Thanks==
 
