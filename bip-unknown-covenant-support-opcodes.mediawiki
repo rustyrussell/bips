@@ -41,6 +41,9 @@ A key motivation for these changes lies in future possible BIPs: once script is 
 ;OP_BYTEREV
 : This is the minimum requirement for constructing ordered Merkle trees as specified in Taproot.  Unfortunately, hashes need to be compared left to right, where Script opcodes operate right to left (as per little endian numbers).  Alternatives would be a direct OP_REVCMP opcode, or even a dedicated Merkle opcode, but byte reversal can be generally useful.
 
+;OP_ECSCALARMUL
+: Required for constructing Taproot spends: multiply the value on top of the stack (if <= 32 bytes) by G, replacing it with the EC point.  The varops cost is the same as a CHECKSIG operation.
+
 ;OP_ECPOINTADD
 : Also required for constructing Taproot spends.  The varops cost is the same as a CHECKSIG operation.
 
@@ -52,7 +55,7 @@ A key motivation for these changes lies in future possible BIPs: once script is 
 
 ===Rationale===
 
-Bitcoin script was developed long before Taproot: OP_ECPOINTADD and OP_BYTEREV are the minimal missing opcodes required for creating Taproot trees in script.  The need for OP_CHECKSIGFROMSTACK and OP_SEGMENT are a side-effect of generic introspection, into the tx itself for arbitrary signature coverage, and into scripts to allow specification of partial spending requirements.  OP_INTERNALKEY is trivial, but can save 32 weight on a transaction in many cases, which is a non-trivial savings.  OP_MULTI is more complex, but allows for much more general handling of multiple inputs or outputs: bitcoin script does not have iteration, so all possible numbers have to be handled directly, which is unwieldy at best.
+Bitcoin script was developed long before Taproot: OP_ECSCALARMUL, OP_ECPOINTADD and OP_BYTEREV are the minimal missing opcodes required for creating Taproot trees in script.  The need for OP_CHECKSIGFROMSTACK and OP_SEGMENT are a side-effect of generic introspection, into the tx itself for arbitrary signature coverage, and into scripts to allow specification of partial spending requirements.  OP_INTERNALKEY is trivial, but can save 32 weight on a transaction in many cases, which is a non-trivial savings.  OP_MULTI is more complex, but allows for much more general handling of multiple inputs or outputs: bitcoin script does not have iteration, so all possible numbers have to be handled directly, which is unwieldy at best.
 
 There are definitely other opcodes which would be helpful, but from this point most are "merely" optimizations from what is now possible.  This itself is a major milestone: that future opcode proposals can be assessed numerically, by measuring the impact they would have on aggregate onchain space, and from there assessing whether the cost of implementation and deployment is worth the savings.
 
@@ -71,6 +74,11 @@ None as yet.
 - Is OP_MULTI too ambitious?  I previously considered for-each-input and for-each-output iterators, but this is far simpler.
 - Can we come up with a better name for OP_CHECKSIGFROMSTACK?  Unfortunately OP_CHECKSIG is taken, but OP_THE_REAL_CHECKSIG isn't!
 
+== Thanks ==
+
+This BIP would not exist without the thoughtful contributions of the following (in alphabetical order):
+
+* Brandon Black
 
 == Footnotes ==
 
